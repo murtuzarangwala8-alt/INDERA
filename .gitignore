@@ -22,4 +22,4 @@ Thumbs.db
 .vite/
 
 # Large media — store on Cloudinary or similar
-public/hero.mp4
+# public/hero.mp4
