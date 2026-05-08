@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+server/node_modules/
+
+# Build
+dist/
+build/
+
+# Environment — NEVER commit these
+.env
+server/.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vite
+.vite/
+
+# Large media — store on Cloudinary or similar
+public/hero.mp4

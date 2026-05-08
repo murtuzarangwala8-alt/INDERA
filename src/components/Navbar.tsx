@@ -1,0 +1,220 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ShoppingBag, Heart, Search, Menu, X, User, LogOut } from 'lucide-react';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const Navbar: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [accountOpen, setAccountOpen] = useState(false);
+  const { cart, wishlist } = useCart();
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
+      setSearchQuery('');
+    }
+  };
+
+  const navLinks = [
+    { label: 'Collections', href: '/products' },
+    { label: 'Story', href: '/about' },
+    { label: 'Lookbook', href: '/products?category=lookbook' },
+    { label: 'Contact', href: '/contact' },
+  ];
+
+  return (
+    <>
+      <motion.nav
+        initial={{ y: -80 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          scrolled ? 'bg-black/30 backdrop-blur-md' : 'bg-transparent'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* Logo */}
+            <Link to="/" className="flex flex-col leading-none">
+              <span className="font-serif text-2xl font-light tracking-[0.2em] text-ivory">
+                INDÉRA
+              </span>
+              <span className="text-[9px] tracking-[0.35em] text-gold-400 uppercase font-sans font-light">
+                Indo-European Jewelry
+              </span>
+            </Link>
+
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center space-x-10">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  to={link.href}
+                  className="text-xs tracking-[0.2em] uppercase font-sans text-ivory/80 hover:text-gold-400 transition-colors duration-300"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+
+            {/* Icons */}
+            <div className="flex items-center space-x-5">
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="text-ivory/80 hover:text-gold-400 transition-colors"
+                aria-label="Search"
+              >
+                <Search size={18} />
+              </button>
+
+              <Link to="/wishlist" className="relative text-ivory/80 hover:text-gold-400 transition-colors" aria-label="Wishlist">
+                <Heart size={18} />
+                {wishlist.length > 0 && (
+                  <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-gold-400 text-obsidian text-[9px] font-bold flex items-center justify-center">
+                    {wishlist.length}
+                  </span>
+                )}
+              </Link>
+
+              {/* Account */}
+              <div className="relative">
+                <button
+                  onClick={() => isAuthenticated ? setAccountOpen(!accountOpen) : navigate('/login')}
+                  className="text-ivory/80 hover:text-gold-400 transition-colors"
+                  aria-label="Account"
+                >
+                  <User size={18} />
+                </button>
+                <AnimatePresence>
+                  {accountOpen && isAuthenticated && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      className="absolute right-0 top-8 w-52 glass-dark rounded-sm py-2"
+                      style={{ border: '1px solid rgba(201,168,76,0.15)', zIndex: 60 }}
+                    >
+                      <div className="px-4 py-3 border-b border-ivory/5">
+                        <p className="text-ivory text-sm font-serif">{user?.firstName} {user?.lastName}</p>
+                        <p className="text-ivory/30 text-[10px] font-sans truncate">{user?.email}</p>
+                      </div>
+                      <Link to="/account" onClick={() => setAccountOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-ivory/60 hover:text-gold-400 text-xs font-sans tracking-widest uppercase transition-colors">
+                        <User size={13} /> My Account
+                      </Link>
+                      <button onClick={() => { logout(); setAccountOpen(false); }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-ivory/60 hover:text-terracotta text-xs font-sans tracking-widest uppercase transition-colors">
+                        <LogOut size={13} /> Sign Out
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <Link to="/cart" className="relative text-ivory/80 hover:text-gold-400 transition-colors" aria-label="Cart">
+                <ShoppingBag size={18} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-gold-400 text-obsidian text-[9px] font-bold flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="md:hidden text-ivory/80 hover:text-gold-400 transition-colors"
+                aria-label="Menu"
+              >
+                {isOpen ? <X size={20} /> : <Menu size={20} />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden glass-dark border-t border-gold-400/10"
+            >
+              <div className="px-6 py-6 space-y-5">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.label}
+                    to={link.href}
+                    onClick={() => setIsOpen(false)}
+                    className="block text-xs tracking-[0.25em] uppercase font-sans text-ivory/80 hover:text-gold-400 transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.nav>
+
+      {/* Search Overlay */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-start justify-center pt-32 px-6"
+            style={{ background: 'rgba(13,13,13,0.85)', backdropFilter: 'blur(12px)' }}
+            onClick={() => setSearchOpen(false)}
+          >
+            <motion.form
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -20, opacity: 0 }}
+              onSubmit={handleSearch}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-xl"
+            >
+              <div className="flex items-center border-b border-gold-400/50 pb-3">
+                <Search size={20} className="text-gold-400 mr-4 flex-shrink-0" />
+                <input
+                  autoFocus
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search jewelry, collections..."
+                  className="flex-1 bg-transparent text-ivory text-xl font-serif font-light outline-none placeholder-ivory/30"
+                />
+                <button type="button" onClick={() => setSearchOpen(false)} className="text-ivory/40 hover:text-ivory ml-4">
+                  <X size={20} />
+                </button>
+              </div>
+              <p className="text-ivory/30 text-xs tracking-widest uppercase mt-4 font-sans">
+                Press Enter to search
+              </p>
+            </motion.form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+};
+
+export default Navbar;
