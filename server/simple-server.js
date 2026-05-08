@@ -21,7 +21,7 @@ let orderCounter = 1;
 app.get('/api/health', (req, res) => {
   res.json({ 
     success: true, 
-    message: 'ChronoLux API is running (Simple Mode - No Database)',
+    message: 'INDÉRA API is running (Simple Mode - No Database)',
     timestamp: new Date().toISOString(),
   });
 });
@@ -216,7 +216,7 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log('========================================');
-  console.log('  🚀 ChronoLux Backend Server');
+  console.log('  🚀 INDÉRA Backend Server');
   console.log('========================================');
   console.log(`📍 Server: http://localhost:${PORT}`);
   console.log(`📍 API: http://localhost:${PORT}/api`);

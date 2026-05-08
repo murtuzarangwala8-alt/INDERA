@@ -1,7 +1,7 @@
 {
-  "name": "chronolux-server",
+  "name": "indera-server",
   "version": "1.0.0",
-  "description": "ChronoLux Watches Backend API",
+  "description": "INDÉRA Jewelry Backend API",
   "main": "index.js",
   "type": "module",
   "scripts": {

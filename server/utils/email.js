@@ -148,7 +148,7 @@ export const sendOrderConfirmation = async (order) => {
       <body>
         <div class="container">
           <div class="header">
-            <h1 style="margin: 0; color: #FFD700;">ChronoLux Watches</h1>
+            <h1 style="margin: 0; color: #C9A84C;">INDÉRA</h1>
             <p style="margin: 10px 0 0 0;">Thank you for your order!</p>
           </div>
           
@@ -204,11 +204,11 @@ export const sendOrderConfirmation = async (order) => {
             </div>
             
             <p>We'll send you a shipping confirmation email with tracking information once your order ships.</p>
-            <p>If you have any questions, please contact us at info@chronolux.com</p>
+            <p>If you have any questions, please contact us at hello@indera.com</p>
           </div>
           
           <div class="footer">
-            <p>&copy; 2024 ChronoLux Watches. All rights reserved.</p>
+            <p>&copy; 2024 INDÉRA. All rights reserved.</p>
           </div>
         </div>
       </body>

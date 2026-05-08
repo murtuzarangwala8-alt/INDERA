@@ -24,7 +24,7 @@ const Contact: React.FC = () => {
         <div>
           <h2 className="text-3xl font-bold mb-6">Get in Touch</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-8">
-            Have a question about our watches or need assistance? We're here to help. 
+            Have a question about our jewelry or need assistance? We're here to help.
             Fill out the form and our team will respond within 24 hours.
           </p>
 
@@ -35,8 +35,8 @@ const Contact: React.FC = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-lg mb-1">Email</h3>
-                <p className="text-gray-600 dark:text-gray-400">info@chronolux.com</p>
-                <p className="text-gray-600 dark:text-gray-400">support@chronolux.com</p>
+                <p className="text-gray-600 dark:text-gray-400">hello@indera.com</p>
+                <p className="text-gray-600 dark:text-gray-400">support@indera.com</p>
               </div>
             </div>
 
