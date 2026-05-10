@@ -10,7 +10,7 @@ const ProductDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const products = useProducts();
-  const product = products.find((p) => p.id === Number(id));
+  const product = products.find((p) => String(p.id) === id);
   const { addToCart, toggleWishlist, wishlist } = useCart();
   const [quantity, setQuantity] = useState(1);
 

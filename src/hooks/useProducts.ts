@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
 import { Product } from '../types';
 import { products as defaultProducts, categories as defaultCategories } from '../data/products';
+import { fetchProducts } from '../services/api';
 
 const PRODUCTS_KEY = 'indera_products';
 const CATEGORIES_KEY = 'indera_categories';
 
-// ── Products ──────────────────────────────────────────────────
+const normalizeProduct = (product: Product): Product => ({
+  ...product,
+  id: product._id || product.id,
+});
 
 export const getStoredProducts = (): Product[] => {
   try {
     const saved = localStorage.getItem(PRODUCTS_KEY);
-    if (saved) return JSON.parse(saved);
+    if (saved) return JSON.parse(saved).map(normalizeProduct);
   } catch {}
   return defaultProducts;
 };
@@ -22,19 +26,35 @@ export const saveStoredProducts = (products: Product[]) => {
 
 export const useProducts = () => {
   const [products, setProducts] = useState<Product[]>(getStoredProducts);
+
   useEffect(() => {
+    let active = true;
+
+    const loadProducts = async () => {
+      try {
+        const data = await fetchProducts({ limit: '100' });
+        if (active && data.success && Array.isArray(data.products)) {
+          setProducts(data.products.map(normalizeProduct));
+        }
+      } catch {
+        if (active) setProducts(getStoredProducts());
+      }
+    };
+
     const sync = () => setProducts(getStoredProducts());
+
+    loadProducts();
     window.addEventListener('indera_products_updated', sync);
     window.addEventListener('storage', sync);
     return () => {
+      active = false;
       window.removeEventListener('indera_products_updated', sync);
       window.removeEventListener('storage', sync);
     };
   }, []);
+
   return products;
 };
-
-// ── Categories ────────────────────────────────────────────────
 
 export interface Category {
   name: string;

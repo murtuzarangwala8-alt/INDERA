@@ -9,6 +9,7 @@ import {
   updateOrderStatus,
   getOrderStats,
 } from '../controllers/orderController.js';
+import { adminAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -18,10 +19,10 @@ router.post('/payment/create-intent', createPaymentIntent);
 router.post('/payment/confirm', confirmPayment);
 router.get('/orders/number/:orderNumber', getOrderByNumber);
 
-// Admin routes (in production, add authentication middleware)
-router.get('/orders', getAllOrders);
-router.get('/orders/stats', getOrderStats);
-router.get('/orders/:id', getOrderById);
-router.put('/orders/:id', updateOrderStatus);
+// Admin routes
+router.get('/orders', adminAuth, getAllOrders);
+router.get('/orders/stats', adminAuth, getOrderStats);
+router.get('/orders/:id', adminAuth, getOrderById);
+router.put('/orders/:id', adminAuth, updateOrderStatus);
 
 export default router;

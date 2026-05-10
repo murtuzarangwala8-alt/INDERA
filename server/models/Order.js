@@ -19,7 +19,7 @@ const orderSchema = new mongoose.Schema({
     country: { type: String, required: true },
   },
   items: [{
-    productId: { type: Number, required: true },
+    productId: { type: String, required: true },
     name: { type: String, required: true },
     brand: { type: String, required: true },
     price: { type: Number, required: true },

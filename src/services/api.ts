@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || 'indera-admin-secret-2024';
 
 const adminHeaders = {

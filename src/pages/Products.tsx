@@ -37,7 +37,7 @@ const Products: React.FC = () => {
     if (filters.sortBy === 'price-asc') result.sort((a, b) => a.price - b.price);
     if (filters.sortBy === 'price-desc') result.sort((a, b) => b.price - a.price);
     if (filters.sortBy === 'popularity') result.sort((a, b) => b.rating - a.rating);
-    if (filters.sortBy === 'newest') result.sort((a, b) => b.id - a.id);
+    if (filters.sortBy === 'newest') result.sort((a, b) => Number(b.id) - Number(a.id));
     return result;
   }, [filters]);
 

@@ -6,7 +6,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import toast from 'react-hot-toast';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = {
   createOrder: (data: unknown) => fetch(`${API_URL}/orders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(r => r.json()),
@@ -57,7 +57,7 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[] }> = ({
           country: formData.country,
         },
         items: cart.map(item => ({
-          productId: item.id,
+          productId: String(item.id),
           name: item.name,
           brand: item.brand,
           price: item.price,

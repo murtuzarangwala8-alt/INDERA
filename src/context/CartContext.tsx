@@ -6,8 +6,8 @@ interface CartContextType {
   cart: CartItem[];
   wishlist: Product[];
   addToCart: (product: Product) => void;
-  removeFromCart: (id: number) => void;
-  updateQuantity: (id: number, quantity: number) => void;
+  removeFromCart: (id: string | number) => void;
+  updateQuantity: (id: string | number, quantity: number) => void;
   toggleWishlist: (product: Product) => void;
   clearCart: () => void;
   cartTotal: number;
@@ -33,12 +33,12 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   };
 
-  const removeFromCart = (id: number) => {
+  const removeFromCart = (id: string | number) => {
     setCart((prev) => prev.filter((item) => item.id !== id));
     toast.success('Removed from cart');
   };
 
-  const updateQuantity = (id: number, quantity: number) => {
+  const updateQuantity = (id: string | number, quantity: number) => {
     if (quantity < 1) return;
     setCart((prev) =>
       prev.map((item) => (item.id === id ? { ...item, quantity } : item))
