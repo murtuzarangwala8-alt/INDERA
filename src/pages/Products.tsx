@@ -3,10 +3,8 @@ import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
-import { useProducts } from '../hooks/useProducts';
+import { useCategories, useProducts } from '../hooks/useProducts';
 import { FilterState } from '../types';
-
-const CATEGORIES = ['All', 'Minimal Jhumkas', 'Pearl Fusion', 'Indo-European Necklaces', 'Modern Kundan', 'Festival Sets'];
 
 const Products: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -18,6 +16,7 @@ const Products: React.FC = () => {
     sortBy: 'popularity',
   });
   const [showFilters, setShowFilters] = useState(false);
+  const categories = useCategories();
 
   useEffect(() => {
     const cat = searchParams.get('category') || '';
@@ -59,7 +58,7 @@ const Products: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Category Pills */}
         <div className="flex gap-2 flex-wrap mb-8 overflow-x-auto scrollbar-hide">
-          {CATEGORIES.map((cat) => (
+          {['All', ...categories.map((category) => category.name)].map((cat) => (
             <button
               key={cat}
               onClick={() => setFilters((f) => ({ ...f, category: cat === 'All' ? '' : cat }))}

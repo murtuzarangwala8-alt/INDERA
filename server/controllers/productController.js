@@ -1,4 +1,5 @@
 import Product from '../models/Product.js';
+import Category from '../models/Category.js';
 
 // GET /api/products — list with filter, search, sort, pagination
 export const getAllProducts = async (req, res) => {
@@ -85,6 +86,13 @@ export const createProduct = async (req, res) => {
   try {
     const product = new Product(req.body);
     await product.save();
+    if (product.category) {
+      await Category.updateOne(
+        { name: product.category },
+        { $setOnInsert: { name: product.category, image: product.image, isActive: true } },
+        { upsert: true }
+      );
+    }
     res.status(201).json({ success: true, message: 'Product created', product });
   } catch (error) {
     if (error.name === 'ValidationError') {
@@ -104,6 +112,13 @@ export const updateProduct = async (req, res) => {
       { new: true, runValidators: true }
     );
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+    if (product.category) {
+      await Category.updateOne(
+        { name: product.category },
+        { $setOnInsert: { name: product.category, image: product.image, isActive: true } },
+        { upsert: true }
+      );
+    }
     res.json({ success: true, message: 'Product updated', product });
   } catch (error) {
     if (error.name === 'ValidationError') {
@@ -143,6 +158,77 @@ export const updateStock = async (req, res) => {
     );
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
     res.json({ success: true, message: 'Stock updated', product });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const updateVisibility = async (req, res) => {
+  try {
+    const { isActive } = req.body;
+    if (typeof isActive !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'isActive boolean is required' });
+    }
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      { isActive },
+      { new: true }
+    );
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+    res.json({ success: true, message: isActive ? 'Product shown' : 'Product hidden', product });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getCategories = async (req, res) => {
+  try {
+    const [storedCategories, byCategory] = await Promise.all([
+      Category.find({ isActive: true }).sort({ name: 1 }),
+      Product.aggregate([
+        { $match: { isActive: true } },
+        { $group: { _id: '$category', count: { $sum: 1 }, image: { $first: '$image' } } },
+      ]),
+    ]);
+
+    const countMap = new Map(byCategory.map((item) => [item._id, item]));
+    const categories = storedCategories.map((category) => ({
+      _id: category._id,
+      name: category.name,
+      image: category.image || countMap.get(category.name)?.image,
+      count: countMap.get(category.name)?.count || 0,
+    }));
+
+    res.json({ success: true, categories });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const createCategory = async (req, res) => {
+  try {
+    const { name, image } = req.body;
+    if (!name) return res.status(400).json({ success: false, message: 'Category name is required' });
+    const category = await Category.findOneAndUpdate(
+      { name: name.trim() },
+      { name: name.trim(), image, isActive: true },
+      { new: true, upsert: true, runValidators: true }
+    );
+    res.status(201).json({ success: true, message: 'Category saved', category });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteCategory = async (req, res) => {
+  try {
+    const category = await Category.findByIdAndUpdate(
+      req.params.id,
+      { isActive: false },
+      { new: true }
+    );
+    if (!category) return res.status(404).json({ success: false, message: 'Category not found' });
+    res.json({ success: true, message: 'Category deleted' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -227,6 +313,22 @@ export const seedProducts = async (req, res) => {
         updateOne: {
           filter: { sku: product.sku },
           update: { $set: product },
+          upsert: true,
+        },
+      }))
+    );
+
+    const categoryMap = new Map();
+    seedData.forEach((product) => {
+      if (!categoryMap.has(product.category)) {
+        categoryMap.set(product.category, { name: product.category, image: product.image, isActive: true });
+      }
+    });
+    await Category.bulkWrite(
+      [...categoryMap.values()].map((category) => ({
+        updateOne: {
+          filter: { name: category.name },
+          update: { $set: category },
           upsert: true,
         },
       }))

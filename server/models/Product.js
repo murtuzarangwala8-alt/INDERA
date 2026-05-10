@@ -29,7 +29,6 @@ const productSchema = new mongoose.Schema({
   category: {
     type: String,
     required: [true, 'Category is required'],
-    enum: ['Minimal Jhumkas', 'Pearl Fusion', 'Indo-European Necklaces', 'Modern Kundan', 'Festival Sets', 'Accessories'],
   },
   rating: {
     type: Number,

@@ -7,7 +7,7 @@ export interface Product {
   originalPrice?: number;
   image: string;
   images?: string[];
-  category: 'Minimal Jhumkas' | 'Pearl Fusion' | 'Indo-European Necklaces' | 'Modern Kundan' | 'Festival Sets' | 'Accessories';
+  category: string;
   rating: number;
   reviewCount: number;
   description: string;
@@ -17,6 +17,7 @@ export interface Product {
   isNew?: boolean;
   isBestseller?: boolean;
   hidden?: boolean;
+  isActive?: boolean;
 }
 
 export interface CartItem extends Product {

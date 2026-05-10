@@ -3,8 +3,12 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, Package, Pencil, Plus, Save, Search, Trash2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Product } from '../types';
+import ImageUploader from '../components/ImageUploader';
+import { Category, refreshCategories, refreshProducts } from '../hooks/useProducts';
 import {
+  adminCreateCategory,
   adminCreateProduct,
+  adminDeleteCategory,
   adminDeleteProduct,
   adminFetchOrders,
   adminFetchProducts,
@@ -12,17 +16,18 @@ import {
   adminUpdateOrderStatus,
   adminUpdateProduct,
   adminUpdateStock,
+  adminUpdateVisibility,
+  fetchCategories,
 } from '../services/api';
 
-const CATEGORIES = ['Minimal Jhumkas', 'Pearl Fusion', 'Indo-European Necklaces', 'Modern Kundan', 'Festival Sets', 'Accessories'];
+const FALLBACK_CATEGORIES = ['Minimal Jhumkas', 'Pearl Fusion', 'Indo-European Necklaces', 'Modern Kundan', 'Festival Sets', 'Accessories'];
 const ORDER_STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
 const emptyForm = {
   name: '',
   price: '',
   originalPrice: '',
-  image: '',
-  images: '',
+  images: [] as string[],
   category: 'Minimal Jhumkas',
   description: '',
   material: '',
@@ -32,6 +37,7 @@ const emptyForm = {
   reviewCount: '0',
   isNew: false,
   isBestseller: false,
+  isActive: true,
 };
 
 type FormData = typeof emptyForm;
@@ -46,6 +52,9 @@ const AdminDashboard: React.FC = () => {
   const [keyInput, setKeyInput] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [newCategory, setNewCategory] = useState('');
+  const [newCategoryImage, setNewCategoryImage] = useState('');
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('');
   const [loading, setLoading] = useState(false);
@@ -54,23 +63,25 @@ const AdminDashboard: React.FC = () => {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [deleteConfirm, setDeleteConfirm] = useState<string | number | null>(null);
 
+  const categoryNames = useMemo(() => {
+    const names = categories.length ? categories.map((category) => category.name) : FALLBACK_CATEGORIES;
+    return [...new Set(names)];
+  }, [categories]);
+
   const loadAdminData = async () => {
     setLoading(true);
     try {
-      const [productsResponse, ordersResponse] = await Promise.all([
+      const [productsResponse, ordersResponse, categoriesResponse] = await Promise.all([
         adminFetchProducts({ limit: '100' }),
         adminFetchOrders({ limit: '25' }),
+        fetchCategories(),
       ]);
 
-      if (productsResponse.success) {
-        setProducts(productsResponse.products.map(normalizeProduct));
-      } else {
-        toast.error(productsResponse.message || 'Could not load products');
-      }
+      if (productsResponse.success) setProducts(productsResponse.products.map(normalizeProduct));
+      else toast.error(productsResponse.message || 'Could not load products');
 
-      if (ordersResponse.success) {
-        setOrders(ordersResponse.orders || []);
-      }
+      if (ordersResponse.success) setOrders(ordersResponse.orders || []);
+      if (categoriesResponse.success) setCategories(categoriesResponse.categories || []);
     } catch {
       toast.error('Could not connect to admin API');
     } finally {
@@ -100,7 +111,7 @@ const AdminDashboard: React.FC = () => {
 
   const openAdd = () => {
     setEditProduct(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, category: categoryNames[0] || emptyForm.category });
     setShowModal(true);
   };
 
@@ -110,8 +121,7 @@ const AdminDashboard: React.FC = () => {
       name: product.name,
       price: String(product.price),
       originalPrice: String(product.originalPrice || ''),
-      image: product.image,
-      images: (product.images || [product.image]).join('\n'),
+      images: product.images?.length ? product.images : [product.image],
       category: product.category,
       description: product.description,
       material: product.material,
@@ -121,21 +131,21 @@ const AdminDashboard: React.FC = () => {
       reviewCount: String(product.reviewCount),
       isNew: product.isNew || false,
       isBestseller: product.isBestseller || false,
+      isActive: product.isActive !== false,
     });
     setShowModal(true);
   };
 
   const productPayload = () => {
-    const images = form.images.split('\n').map((image) => image.trim()).filter(Boolean);
-    const primaryImage = form.image.trim() || images[0];
-
+    const images = form.images.map((image) => image.trim()).filter(Boolean);
+    const primaryImage = images[0];
     return {
       name: form.name,
       brand: 'INDERA',
       price: Number(form.price),
       originalPrice: form.originalPrice ? Number(form.originalPrice) : undefined,
       image: primaryImage,
-      images: images.length ? images : [primaryImage],
+      images,
       category: form.category,
       description: form.description,
       material: form.material,
@@ -144,18 +154,23 @@ const AdminDashboard: React.FC = () => {
       rating: Number(form.rating),
       reviewCount: Number(form.reviewCount),
       inStock: Number(form.stockQuantity) > 0,
+      isActive: form.isActive,
       isNew: form.isNew,
       isBestseller: form.isBestseller,
       isFeatured: form.isNew || form.isBestseller,
     };
   };
 
+  const refreshPublicPages = () => {
+    refreshProducts();
+    refreshCategories();
+  };
+
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
     const payload = productPayload();
-
     if (!payload.name || !payload.price || !payload.image || !payload.description || !payload.material || !payload.origin) {
-      toast.error('Fill all required fields');
+      toast.error('Fill all required fields and add at least one image');
       return;
     }
 
@@ -171,6 +186,7 @@ const AdminDashboard: React.FC = () => {
 
       toast.success(editProduct ? 'Product updated' : 'Product added');
       setShowModal(false);
+      refreshPublicPages();
       await loadAdminData();
     } catch {
       toast.error('Could not save product');
@@ -180,20 +196,34 @@ const AdminDashboard: React.FC = () => {
   const handleDelete = async (id: string | number) => {
     const response = await adminDeleteProduct(String(id));
     if (response.success) {
-      toast.success('Product deleted');
+      toast.success('Product hidden');
       setDeleteConfirm(null);
+      refreshPublicPages();
       await loadAdminData();
     } else {
-      toast.error(response.message || 'Could not delete product');
+      toast.error(response.message || 'Could not hide product');
     }
   };
 
   const toggleStock = async (product: Product) => {
     const response = await adminUpdateStock(String(product.id), product.inStock ? 0 : 10);
     if (response.success) {
+      refreshPublicPages();
       await loadAdminData();
     } else {
       toast.error(response.message || 'Could not update stock');
+    }
+  };
+
+  const toggleVisibility = async (product: Product) => {
+    const next = product.isActive === false;
+    const response = await adminUpdateVisibility(String(product.id), next);
+    if (response.success) {
+      toast.success(next ? 'Product visible' : 'Product hidden');
+      refreshPublicPages();
+      await loadAdminData();
+    } else {
+      toast.error(response.message || 'Could not update visibility');
     }
   };
 
@@ -201,9 +231,39 @@ const AdminDashboard: React.FC = () => {
     const response = await adminSeedProducts();
     if (response.success) {
       toast.success('Starter products added');
+      refreshPublicPages();
       await loadAdminData();
     } else {
       toast.error(response.message || 'Could not seed products');
+    }
+  };
+
+  const handleAddCategory = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const response = await adminCreateCategory({ name: newCategory, image: newCategoryImage || undefined });
+    if (response.success) {
+      toast.success('Category added');
+      setNewCategory('');
+      setNewCategoryImage('');
+      refreshCategories();
+      await loadAdminData();
+    } else {
+      toast.error(response.message || 'Could not add category');
+    }
+  };
+
+  const handleDeleteCategory = async (category: Category) => {
+    if (!category._id) {
+      toast.error('Seed categories first before deleting');
+      return;
+    }
+    const response = await adminDeleteCategory(category._id);
+    if (response.success) {
+      toast.success('Category deleted');
+      refreshCategories();
+      await loadAdminData();
+    } else {
+      toast.error(response.message || 'Could not delete category');
     }
   };
 
@@ -225,8 +285,8 @@ const AdminDashboard: React.FC = () => {
 
   const stats = {
     total: products.length,
-    inStock: products.filter((product) => product.inStock).length,
-    outOfStock: products.filter((product) => !product.inStock).length,
+    visible: products.filter((product) => product.isActive !== false).length,
+    hidden: products.filter((product) => product.isActive === false).length,
     orders: orders.length,
   };
 
@@ -262,7 +322,7 @@ const AdminDashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-gold-400 text-[10px] tracking-[0.4em] uppercase font-sans mb-1">Admin Panel</p>
-            <h1 className="font-serif text-ivory text-3xl font-light">Products and Orders</h1>
+            <h1 className="font-serif text-ivory text-3xl font-light">Products, Categories, Orders</h1>
           </div>
           <div className="flex flex-wrap gap-3">
             <button onClick={loadAdminData} className="btn-outline py-3 px-5" disabled={loading}>Refresh</button>
@@ -278,8 +338,8 @@ const AdminDashboard: React.FC = () => {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {[
             { label: 'Products', value: stats.total, icon: Package, color: 'text-gold-400' },
-            { label: 'In Stock', value: stats.inStock, icon: Eye, color: 'text-green-400' },
-            { label: 'Out of Stock', value: stats.outOfStock, icon: EyeOff, color: 'text-terracotta' },
+            { label: 'Visible', value: stats.visible, icon: Eye, color: 'text-green-400' },
+            { label: 'Hidden', value: stats.hidden, icon: EyeOff, color: 'text-terracotta' },
             { label: 'Recent Orders', value: stats.orders, icon: Package, color: 'text-blue-400' },
           ].map((stat) => (
             <div key={stat.label} className="glass-dark rounded-sm p-5" style={{ border: '1px solid rgba(201,168,76,0.1)' }}>
@@ -291,6 +351,35 @@ const AdminDashboard: React.FC = () => {
             </div>
           ))}
         </div>
+
+        <section className="glass-dark rounded-sm p-5 mb-8" style={{ border: '1px solid rgba(201,168,76,0.1)' }}>
+          <h2 className="font-serif text-ivory text-2xl font-light mb-4">Categories</h2>
+          <form onSubmit={handleAddCategory} className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto] gap-3 mb-4">
+            <input
+              value={newCategory}
+              onChange={(event) => setNewCategory(event.target.value)}
+              placeholder="New category name"
+              className="bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/40"
+            />
+            <input
+              value={newCategoryImage}
+              onChange={(event) => setNewCategoryImage(event.target.value)}
+              placeholder="Category image URL optional"
+              className="bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/40"
+            />
+            <button type="submit" className="btn-gold px-5">Add Category</button>
+          </form>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <span key={category.name} className="inline-flex items-center gap-2 border border-ivory/10 px-3 py-2 text-xs text-ivory/60">
+                {category.name}
+                <button onClick={() => handleDeleteCategory(category)} className="text-terracotta hover:text-ivory" aria-label={`Delete ${category.name}`}>
+                  <X size={13} />
+                </button>
+              </span>
+            ))}
+          </div>
+        </section>
 
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="relative flex-1">
@@ -309,7 +398,7 @@ const AdminDashboard: React.FC = () => {
             className="bg-transparent border border-ivory/10 text-ivory/60 px-4 py-3 text-xs font-sans outline-none focus:border-gold-400/40 cursor-pointer"
           >
             <option value="" className="bg-obsidian">All Categories</option>
-            {CATEGORIES.map((category) => <option key={category} value={category} className="bg-obsidian">{category}</option>)}
+            {categoryNames.map((category) => <option key={category} value={category} className="bg-obsidian">{category}</option>)}
           </select>
         </div>
 
@@ -321,13 +410,13 @@ const AdminDashboard: React.FC = () => {
                   <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Product</th>
                   <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Category</th>
                   <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Price</th>
-                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Status</th>
+                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Controls</th>
                   <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((product) => (
-                  <tr key={String(product.id)} className="border-b border-ivory/5 hover:bg-ivory/[0.02] transition-colors">
+                  <tr key={String(product.id)} className={`border-b border-ivory/5 hover:bg-ivory/[0.02] transition-colors ${product.isActive === false ? 'opacity-45' : ''}`}>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <img src={product.image} alt={product.name} className="w-12 h-12 object-cover rounded-sm flex-shrink-0" />
@@ -343,13 +432,18 @@ const AdminDashboard: React.FC = () => {
                       {product.originalPrice && <p className="text-ivory/30 text-xs line-through">EUR {product.originalPrice}</p>}
                     </td>
                     <td className="px-5 py-4">
-                      <button onClick={() => toggleStock(product)} className={`text-[9px] tracking-widest uppercase font-sans px-3 py-1.5 border transition-all ${
-                        product.inStock
-                          ? 'border-green-400/30 text-green-400 hover:bg-green-400/10'
-                          : 'border-terracotta/30 text-terracotta hover:bg-terracotta/10'
-                      }`}>
-                        {product.inStock ? 'In Stock' : 'Out of Stock'}
-                      </button>
+                      <div className="flex flex-wrap gap-2">
+                        <button onClick={() => toggleVisibility(product)} className={`text-[9px] tracking-widest uppercase font-sans px-3 py-1.5 border transition-all ${
+                          product.isActive !== false ? 'border-green-400/30 text-green-400' : 'border-terracotta/30 text-terracotta'
+                        }`}>
+                          {product.isActive !== false ? 'Visible' : 'Hidden'}
+                        </button>
+                        <button onClick={() => toggleStock(product)} className={`text-[9px] tracking-widest uppercase font-sans px-3 py-1.5 border transition-all ${
+                          product.inStock ? 'border-green-400/30 text-green-400' : 'border-terracotta/30 text-terracotta'
+                        }`}>
+                          {product.inStock ? 'In Stock' : 'Out of Stock'}
+                        </button>
+                      </div>
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
@@ -393,11 +487,7 @@ const AdminDashboard: React.FC = () => {
                     </td>
                     <td className="px-5 py-4 text-ivory font-serif text-lg">EUR {order.pricing?.total?.toFixed?.(2) || order.pricing?.total}</td>
                     <td className="px-5 py-4">
-                      <select
-                        value={order.status}
-                        onChange={(event) => handleOrderStatus(order._id, event.target.value)}
-                        className="bg-obsidian border border-ivory/10 text-ivory/70 px-3 py-2 text-xs uppercase font-sans"
-                      >
+                      <select value={order.status} onChange={(event) => handleOrderStatus(order._id, event.target.value)} className="bg-obsidian border border-ivory/10 text-ivory/70 px-3 py-2 text-xs uppercase font-sans">
                         {ORDER_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
                       </select>
                     </td>
@@ -415,6 +505,7 @@ const AdminDashboard: React.FC = () => {
           form={form}
           setForm={setForm}
           editProduct={editProduct}
+          categories={categoryNames}
           onClose={() => setShowModal(false)}
           onSave={handleSave}
         />
@@ -424,10 +515,10 @@ const AdminDashboard: React.FC = () => {
         <div className="fixed inset-0 z-[80] flex items-center justify-center px-4 bg-obsidian/90 backdrop-blur">
           <div className="glass-dark rounded-sm p-8 max-w-sm w-full text-center" style={{ border: '1px solid rgba(196,113,74,0.3)' }}>
             <Trash2 size={32} className="mx-auto mb-4 text-terracotta" />
-            <h3 className="font-serif text-ivory text-2xl font-light mb-2">Delete Product?</h3>
-            <p className="text-ivory/40 text-sm font-sans mb-8">This will hide it from the shop.</p>
+            <h3 className="font-serif text-ivory text-2xl font-light mb-2">Hide Product?</h3>
+            <p className="text-ivory/40 text-sm font-sans mb-8">This removes it from the public shop. You can show it again with the visibility button.</p>
             <div className="flex gap-3">
-              <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 py-3 bg-terracotta text-ivory text-xs tracking-widest uppercase font-sans hover:bg-terracotta/80 transition-colors">Delete</button>
+              <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 py-3 bg-terracotta text-ivory text-xs tracking-widest uppercase font-sans hover:bg-terracotta/80 transition-colors">Hide</button>
               <button onClick={() => setDeleteConfirm(null)} className="flex-1 btn-outline py-3">Cancel</button>
             </div>
           </div>
@@ -441,11 +532,12 @@ interface ProductModalProps {
   form: FormData;
   setForm: React.Dispatch<React.SetStateAction<FormData>>;
   editProduct: Product | null;
+  categories: string[];
   onClose: () => void;
   onSave: (event: React.FormEvent) => void;
 }
 
-const ProductModal: React.FC<ProductModalProps> = ({ form, setForm, editProduct, onClose, onSave }) => (
+const ProductModal: React.FC<ProductModalProps> = ({ form, setForm, editProduct, categories, onClose, onSave }) => (
   <div className="fixed inset-0 z-[70] flex items-center justify-center px-4 py-8 bg-obsidian/90 backdrop-blur">
     <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto glass-dark rounded-sm" style={{ border: '1px solid rgba(201,168,76,0.2)' }}>
       <div className="flex items-center justify-between px-6 py-5 border-b border-ivory/5">
@@ -456,17 +548,19 @@ const ProductModal: React.FC<ProductModalProps> = ({ form, setForm, editProduct,
       </div>
 
       <form onSubmit={onSave} className="p-6 space-y-5">
+        <div>
+          <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-3">Product Images</label>
+          <ImageUploader images={form.images} onChange={(images) => setForm({ ...form, images })} maxImages={6} />
+        </div>
         <Field label="Product Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} required />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Price" type="number" value={form.price} onChange={(value) => setForm({ ...form, price: value })} required />
           <Field label="Original Price" type="number" value={form.originalPrice} onChange={(value) => setForm({ ...form, originalPrice: value })} />
         </div>
-        <Field label="Primary Image URL" value={form.image} onChange={(value) => setForm({ ...form, image: value })} required />
-        <TextArea label="Extra Image URLs, one per line" value={form.images} onChange={(value) => setForm({ ...form, images: value })} />
         <div>
           <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Category</label>
           <select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} className="w-full bg-obsidian border border-ivory/10 text-ivory px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50">
-            {CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+            {categories.map((category) => <option key={category} value={category}>{category}</option>)}
           </select>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -480,6 +574,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ form, setForm, editProduct,
           <Field label="Review Count" type="number" value={form.reviewCount} onChange={(value) => setForm({ ...form, reviewCount: value })} />
         </div>
         <div className="flex flex-wrap gap-6">
+          <Toggle label="Visible on site" checked={form.isActive} onChange={() => setForm({ ...form, isActive: !form.isActive })} />
           <Toggle label="New Arrival" checked={form.isNew} onChange={() => setForm({ ...form, isNew: !form.isNew })} />
           <Toggle label="Bestseller" checked={form.isBestseller} onChange={() => setForm({ ...form, isBestseller: !form.isBestseller })} />
         </div>

@@ -19,6 +19,11 @@ export const fetchProductById = async (id: string) => {
   return res.json();
 };
 
+export const fetchCategories = async () => {
+  const res = await fetch(`${API_URL}/categories`);
+  return res.json();
+};
+
 // ── Admin ──────────────────────────────────────────────────────
 
 export const adminFetchProducts = async (params: Record<string, string> = {}) => {
@@ -63,6 +68,32 @@ export const adminUpdateStock = async (id: string, stockQuantity: number) => {
     method: 'PATCH',
     headers: adminHeaders,
     body: JSON.stringify({ stockQuantity }),
+  });
+  return res.json();
+};
+
+export const adminUpdateVisibility = async (id: string, isActive: boolean) => {
+  const res = await fetch(`${API_URL}/admin/products/${id}/visibility`, {
+    method: 'PATCH',
+    headers: adminHeaders,
+    body: JSON.stringify({ isActive }),
+  });
+  return res.json();
+};
+
+export const adminCreateCategory = async (data: { name: string; image?: string }) => {
+  const res = await fetch(`${API_URL}/admin/categories`, {
+    method: 'POST',
+    headers: adminHeaders,
+    body: JSON.stringify(data),
+  });
+  return res.json();
+};
+
+export const adminDeleteCategory = async (id: string) => {
+  const res = await fetch(`${API_URL}/admin/categories/${id}`, {
+    method: 'DELETE',
+    headers: adminHeaders,
   });
   return res.json();
 };

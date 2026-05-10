@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Product } from '../types';
 import { products as defaultProducts, categories as defaultCategories } from '../data/products';
-import { fetchProducts } from '../services/api';
+import { fetchCategories, fetchProducts } from '../services/api';
 
 const PRODUCTS_KEY = 'indera_products';
 const CATEGORIES_KEY = 'indera_categories';
@@ -24,6 +24,14 @@ export const saveStoredProducts = (products: Product[]) => {
   window.dispatchEvent(new Event('indera_products_updated'));
 };
 
+export const refreshProducts = () => {
+  window.dispatchEvent(new Event('indera_products_updated'));
+};
+
+export const refreshCategories = () => {
+  window.dispatchEvent(new Event('indera_categories_updated'));
+};
+
 export const useProducts = () => {
   const [products, setProducts] = useState<Product[]>(getStoredProducts);
 
@@ -35,21 +43,19 @@ export const useProducts = () => {
         const data = await fetchProducts({ limit: '100' });
         if (active && data.success && Array.isArray(data.products)) {
           setProducts(data.products.map(normalizeProduct));
+          return;
         }
-      } catch {
-        if (active) setProducts(getStoredProducts());
-      }
+      } catch {}
+      if (active) setProducts(getStoredProducts());
     };
 
-    const sync = () => setProducts(getStoredProducts());
-
     loadProducts();
-    window.addEventListener('indera_products_updated', sync);
-    window.addEventListener('storage', sync);
+    window.addEventListener('indera_products_updated', loadProducts);
+    window.addEventListener('storage', loadProducts);
     return () => {
       active = false;
-      window.removeEventListener('indera_products_updated', sync);
-      window.removeEventListener('storage', sync);
+      window.removeEventListener('indera_products_updated', loadProducts);
+      window.removeEventListener('storage', loadProducts);
     };
   }, []);
 
@@ -57,6 +63,7 @@ export const useProducts = () => {
 };
 
 export interface Category {
+  _id?: string;
   name: string;
   image: string;
   count?: number;
@@ -78,12 +85,26 @@ export const saveStoredCategories = (cats: Category[]) => {
 export const useCategories = () => {
   const [cats, setCats] = useState<Category[]>(getStoredCategories);
   useEffect(() => {
-    const sync = () => setCats(getStoredCategories());
-    window.addEventListener('indera_categories_updated', sync);
-    window.addEventListener('storage', sync);
+    let active = true;
+
+    const loadCategories = async () => {
+      try {
+        const data = await fetchCategories();
+        if (active && data.success && Array.isArray(data.categories) && data.categories.length > 0) {
+          setCats(data.categories);
+          return;
+        }
+      } catch {}
+      if (active) setCats(getStoredCategories());
+    };
+
+    loadCategories();
+    window.addEventListener('indera_categories_updated', loadCategories);
+    window.addEventListener('storage', loadCategories);
     return () => {
-      window.removeEventListener('indera_categories_updated', sync);
-      window.removeEventListener('storage', sync);
+      active = false;
+      window.removeEventListener('indera_categories_updated', loadCategories);
+      window.removeEventListener('storage', loadCategories);
     };
   }, []);
   return cats;
