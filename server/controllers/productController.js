@@ -201,11 +201,6 @@ export const getProductStats = async (req, res) => {
 // POST /api/admin/products/seed — seed initial INDÉRA products
 export const seedProducts = async (req, res) => {
   try {
-    const existing = await Product.countDocuments();
-    if (existing > 0) {
-      return res.status(400).json({ success: false, message: `Database already has ${existing} products. Use force=true to reseed.` });
-    }
-
     const seedData = [
       { name: 'Chandni Minimal Jhumkas', price: 189, image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80', category: 'Minimal Jhumkas', rating: 4.9, reviewCount: 142, description: 'Delicate gold-plated jhumkas with a modern silhouette. Handcrafted in Jaipur using traditional Kundan setting techniques reimagined for the contemporary woman.', material: '22K Gold Plated Sterling Silver', origin: 'Jaipur, Rajasthan', stockQuantity: 45, isBestseller: true, isFeatured: true },
       { name: 'Riviera Pearl Drop Earrings', price: 245, image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80', category: 'Pearl Fusion', rating: 4.8, reviewCount: 98, description: 'South Sea pearls suspended in hand-hammered gold frames. A fusion of Indian pearl heritage and European minimalist design.', material: 'South Sea Pearls & 18K Gold Vermeil', origin: 'Mumbai & Surat', stockQuantity: 28, isNew: true, isFeatured: true },
@@ -219,10 +214,31 @@ export const seedProducts = async (req, res) => {
       { name: 'Navratri Celebration Set', price: 890, image: 'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=800&q=80', category: 'Festival Sets', rating: 4.8, reviewCount: 44, description: 'Vibrant festival set with Meenakari necklace and matching jhumkas.', material: 'Meenakari Enamel, 22K Gold Plating', origin: 'Jaipur & Delhi', stockQuantity: 0 },
       { name: 'Versailles Kundan Bracelet', price: 340, image: 'https://images.unsplash.com/photo-1573408301185-9519f94816b5?w=800&q=80', category: 'Modern Kundan', rating: 4.7, reviewCount: 62, description: 'A wide cuff bracelet with Kundan inlay inspired by Versailles palace motifs.', material: 'Kundan Stones, Brass, 22K Gold Plating', origin: 'Delhi', stockQuantity: 25, isNew: true },
       { name: 'Malabar Pearl Ear Cuff', price: 195, image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80', category: 'Pearl Fusion', rating: 4.6, reviewCount: 87, description: 'A sculptural ear cuff featuring Malabar pearls. No piercing required.', material: 'Freshwater Pearls, Sterling Silver', origin: 'Surat, Gujarat', stockQuantity: 40 },
-    ];
+    ].map((product, index) => ({
+      ...product,
+      brand: 'INDERA',
+      sku: `IND-SEED-${String(index + 1).padStart(5, '0')}`,
+      inStock: product.stockQuantity > 0,
+      isActive: true,
+    }));
 
-    const products = await Product.insertMany(seedData);
-    res.status(201).json({ success: true, message: `Seeded ${products.length} products`, count: products.length });
+    const result = await Product.bulkWrite(
+      seedData.map((product) => ({
+        updateOne: {
+          filter: { sku: product.sku },
+          update: { $set: product },
+          upsert: true,
+        },
+      }))
+    );
+
+    res.status(201).json({
+      success: true,
+      message: `Seeded ${seedData.length} products`,
+      count: seedData.length,
+      inserted: result.upsertedCount,
+      updated: result.modifiedCount,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
