@@ -10,25 +10,12 @@ dotenv.config();
 
 const app = express();
 
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
-
 app.use(cors({
-  origin: process.env.FRONTEND_URL || true,
+  origin: true,
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-
-app.use('/api/auth', authRoutes);
-app.use('/api', productRoutes);
-app.use('/api', orderRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -42,6 +29,19 @@ app.get('/api/health', (req, res) => {
 app.get('/api/config/stripe', (req, res) => {
   res.json({ success: true, publishableKey: process.env.STRIPE_PUBLISHABLE_KEY });
 });
+
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.use('/api/auth', authRoutes);
+app.use('/api', productRoutes);
+app.use('/api', orderRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack || err);
