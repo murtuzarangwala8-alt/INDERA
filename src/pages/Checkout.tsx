@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Loader } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import toast from 'react-hot-toast';
@@ -9,7 +10,14 @@ import toast from 'react-hot-toast';
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = {
-  createOrder: (data: unknown) => fetch(`${API_URL}/orders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(r => r.json()),
+  createOrder: (data: unknown, token?: string | null) => fetch(`${API_URL}/orders`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(data),
+  }).then(r => r.json()),
   createPaymentIntent: (amount: number, orderId: string) => fetch(`${API_URL}/payment/create-intent`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amount, orderId }) }).then(r => r.json()),
   confirmPayment: (orderId: string, paymentIntentId: string) => fetch(`${API_URL}/payment/confirm`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId, paymentIntentId }) }).then(r => r.json()),
   getStripeConfig: () => fetch(`${API_URL}/config/stripe`).then(r => r.json()),
@@ -17,7 +25,7 @@ const api = {
 
 let stripePromise: any = null;
 
-const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[] }> = ({ total, formData, cart }) => {
+const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?: string | null }> = ({ total, formData, cart, token }) => {
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
@@ -72,7 +80,7 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[] }> = ({
         },
       };
 
-      const orderResponse = await api.createOrder(orderData);
+      const orderResponse = await api.createOrder(orderData, token);
 
       if (!orderResponse.success) {
         throw new Error(orderResponse.message);
@@ -217,6 +225,7 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[] }> = ({
 
 const Checkout: React.FC = () => {
   const { cart, cartTotal } = useCart();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -229,6 +238,23 @@ const Checkout: React.FC = () => {
     zipCode: '',
     country: '',
   });
+
+  useEffect(() => {
+    if (user) {
+      const address = user.shippingAddresses?.find((item) => item.isDefault) || user.shippingAddresses?.[0];
+      setFormData((current) => ({
+        ...current,
+        firstName: current.firstName || user.firstName || '',
+        lastName: current.lastName || user.lastName || '',
+        email: current.email || user.email || '',
+        phone: current.phone || user.phone || '',
+        address: current.address || address?.address || '',
+        city: current.city || address?.city || '',
+        zipCode: current.zipCode || address?.zipCode || '',
+        country: current.country || address?.country || '',
+      }));
+    }
+  }, [user]);
 
   useEffect(() => {
     const initStripe = async () => {
@@ -351,7 +377,7 @@ const Checkout: React.FC = () => {
 
             {stripePromise && (
               <Elements stripe={stripePromise}>
-                <CheckoutForm total={total} formData={formData} cart={cart} />
+                <CheckoutForm total={total} formData={formData} cart={cart} token={token} />
               </Elements>
             )}
           </div>

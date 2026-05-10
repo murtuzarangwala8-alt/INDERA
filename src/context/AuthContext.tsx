@@ -12,6 +12,18 @@ export interface AuthUser {
   emailVerified: boolean;
   phoneVerified: boolean;
   role: string;
+  shippingAddresses?: ShippingAddress[];
+  cart?: unknown[];
+}
+
+export interface ShippingAddress {
+  _id?: string;
+  label?: string;
+  address: string;
+  city: string;
+  zipCode: string;
+  country: string;
+  isDefault?: boolean;
 }
 
 interface AuthContextType {
@@ -26,6 +38,11 @@ interface AuthContextType {
   logout: () => void;
   forgotPassword: (email: string) => Promise<{ success: boolean; message?: string }>;
   resetPassword: (token: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  updateProfile: (data: Partial<AuthUser>) => Promise<{ success: boolean; user?: AuthUser; message?: string }>;
+  addAddress: (data: ShippingAddress) => Promise<{ success: boolean; user?: AuthUser; message?: string }>;
+  deleteAddress: (id: string) => Promise<{ success: boolean; user?: AuthUser; message?: string }>;
+  fetchOrders: () => Promise<{ success: boolean; orders?: unknown[]; message?: string }>;
+  authFetch: (path: string, options?: RequestInit) => Promise<Response>;
   isAuthenticated: boolean;
 }
 
@@ -164,11 +181,53 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return json;
   };
 
+  const authFetch = (path: string, options: RequestInit = {}) => {
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+    return fetch(`${API}${path}`, { ...options, headers });
+  };
+
+  const updateProfile = async (data: Partial<AuthUser>) => {
+    const res = await authFetch('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (json.success && json.user) setUser(json.user);
+    return json;
+  };
+
+  const addAddress = async (data: ShippingAddress) => {
+    const res = await authFetch('/auth/addresses', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (json.success && json.user) setUser(json.user);
+    return json;
+  };
+
+  const deleteAddress = async (id: string) => {
+    const res = await authFetch(`/auth/addresses/${id}`, { method: 'DELETE' });
+    const json = await res.json();
+    if (json.success && json.user) setUser(json.user);
+    return json;
+  };
+
+  const fetchOrders = async () => {
+    const res = await authFetch('/auth/orders');
+    return res.json();
+  };
+
   return (
     <AuthContext.Provider value={{
       user, token, loading,
       register, verifyEmail, verifyPhone, resendOtp,
       login, logout, forgotPassword, resetPassword,
+      updateProfile, addAddress, deleteAddress, fetchOrders, authFetch,
       isAuthenticated: !!user,
     }}>
       {children}

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { CartItem, Product } from '../types';
 import toast from 'react-hot-toast';
+import { useAuth } from './AuthContext';
 
 interface CartContextType {
   cart: CartItem[];
@@ -16,8 +17,50 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [wishlist, setWishlist] = useState<Product[]>([]);
+  const { token, authFetch, isAuthenticated } = useAuth();
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    try { return JSON.parse(localStorage.getItem('indera_cart') || '[]'); } catch { return []; }
+  });
+  const [wishlist, setWishlist] = useState<Product[]>(() => {
+    try { return JSON.parse(localStorage.getItem('indera_wishlist') || '[]'); } catch { return []; }
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('indera_cart', JSON.stringify(cart));
+    if (isAuthenticated) {
+      authFetch('/auth/cart', {
+        method: 'PUT',
+        body: JSON.stringify({
+          cart: cart.map((item) => ({
+            productId: String(item.id),
+            name: item.name,
+            brand: item.brand,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image,
+            category: item.category,
+            origin: item.origin,
+          })),
+        }),
+      }).catch(() => undefined);
+    }
+  }, [cart, isAuthenticated]);
+
+  React.useEffect(() => {
+    localStorage.setItem('indera_wishlist', JSON.stringify(wishlist));
+  }, [wishlist]);
+
+  React.useEffect(() => {
+    if (!token) return;
+    authFetch('/auth/cart')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.cart) && data.cart.length > 0) {
+          setCart(data.cart.map((item: any) => ({ ...item, id: item.productId })));
+        }
+      })
+      .catch(() => undefined);
+  }, [token]);
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
@@ -59,6 +102,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const clearCart = () => {
     setCart([]);
+    localStorage.removeItem('indera_cart');
   };
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);

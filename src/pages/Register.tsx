@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, ArrowRight, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -10,9 +10,11 @@ type Step = 'details' | 'verify-email' | 'verify-phone';
 const Register: React.FC = () => {
   const { register, verifyEmail, verifyPhone, resendOtp } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const initialState = location.state as { userId?: string; step?: Step; email?: string; phone?: string } | null;
 
-  const [step, setStep] = useState<Step>('details');
-  const [userId, setUserId] = useState('');
+  const [step, setStep] = useState<Step>(initialState?.step || 'details');
+  const [userId, setUserId] = useState(initialState?.userId || '');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [emailOtp, setEmailOtp] = useState('');
@@ -20,7 +22,7 @@ const Register: React.FC = () => {
   const [resending, setResending] = useState(false);
 
   const [form, setForm] = useState({
-    firstName: '', lastName: '', email: '', phone: '', password: '',
+    firstName: '', lastName: '', email: initialState?.email || '', phone: initialState?.phone || '', password: '',
   });
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>

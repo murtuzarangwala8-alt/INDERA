@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Order from '../models/Order.js';
 import { generateToken, generateOtp, otpExpiry, generateResetToken } from '../utils/auth.js';
 import { sendEmailOtp, sendWelcomeEmail, sendPasswordResetEmail } from '../utils/email.js';
 import { sendSmsOtp } from '../utils/sms.js';
@@ -42,16 +43,20 @@ export const register = async (req, res) => {
     await user.save();
 
     // Send verifications in parallel
-    await Promise.allSettled([
+    const delivery = await Promise.allSettled([
       sendEmailOtp(email, firstName, emailOtp),
       sendSmsOtp(phone, phoneOtp),
     ]);
+    const devOtp = process.env.NODE_ENV !== 'production' || process.env.ALLOW_DEV_OTP === 'true';
 
     res.status(201).json({
       success: true,
       message: 'Account created. Please verify your email and phone number.',
       userId: user._id,
       nextStep: 'verify-email',
+      emailOtp: devOtp ? emailOtp : undefined,
+      phoneOtp: devOtp ? phoneOtp : undefined,
+      delivery: delivery.map((item) => item.status),
     });
   } catch (error) {
     if (error.code === 11000) {
@@ -145,16 +150,20 @@ export const resendOtp = async (req, res) => {
       user.emailOtp = otp;
       user.emailOtpExpiry = expiry;
       await user.save();
-      await sendEmailOtp(user.email, user.firstName, otp);
+      try { await sendEmailOtp(user.email, user.firstName, otp); } catch {}
     } else {
       if (user.phoneVerified) return res.status(400).json({ success: false, message: 'Phone already verified' });
       user.phoneOtp = otp;
       user.phoneOtpExpiry = expiry;
       await user.save();
-      await sendSmsOtp(user.phone, otp);
+      try { await sendSmsOtp(user.phone, otp); } catch {}
     }
 
-    res.json({ success: true, message: `New OTP sent to your ${type}` });
+    res.json({
+      success: true,
+      message: `New OTP sent to your ${type}`,
+      otp: (process.env.NODE_ENV !== 'production' || process.env.ALLOW_DEV_OTP === 'true') ? otp : undefined,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -277,13 +286,66 @@ export const resetPassword = async (req, res) => {
 // ── PUT /api/auth/profile ──────────────────────────────────────
 export const updateProfile = async (req, res) => {
   try {
-    const { firstName, lastName, shippingAddresses } = req.body;
+    const { firstName, lastName, phone, shippingAddresses } = req.body;
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { firstName, lastName, shippingAddresses },
+      { firstName, lastName, phone, shippingAddresses },
       { new: true, runValidators: true }
     );
     res.json({ success: true, user: user.toSafeObject() });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getMyOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({
+      $or: [
+        { user: req.user.id },
+        { 'customer.email': req.user.email },
+      ],
+    }).sort({ createdAt: -1 });
+    res.json({ success: true, orders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const addAddress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    user.shippingAddresses.push(req.body);
+    await user.save();
+    res.status(201).json({ success: true, user: user.toSafeObject() });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteAddress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    user.shippingAddresses = user.shippingAddresses.filter((address) => String(address._id) !== req.params.id);
+    await user.save();
+    res.json({ success: true, user: user.toSafeObject() });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getCart = async (req, res) => {
+  res.json({ success: true, cart: req.user.cart || [] });
+};
+
+export const saveCart = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { cart: req.body.cart || [] },
+      { new: true }
+    );
+    res.json({ success: true, cart: user.cart || [] });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

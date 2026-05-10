@@ -1,11 +1,14 @@
 import Order from '../models/Order.js';
+import User from '../models/User.js';
 import stripe from '../config/stripe.js';
 import { sendOrderConfirmation } from '../utils/email.js';
+import { verifyToken } from '../utils/auth.js';
 
 // Create new order
 export const createOrder = async (req, res) => {
   try {
     const { customer, shippingAddress, items, pricing } = req.body;
+    let userId;
 
     // Validate required fields
     if (!customer || !shippingAddress || !items || !pricing) {
@@ -15,8 +18,16 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // Create order
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const decoded = verifyToken(authHeader.split(' ')[1]);
+        userId = decoded.id;
+      } catch {}
+    }
+
     const order = new Order({
+      user: userId,
       customer,
       shippingAddress,
       items,
@@ -28,6 +39,23 @@ export const createOrder = async (req, res) => {
     });
 
     await order.save();
+
+    if (userId) {
+      await User.findByIdAndUpdate(userId, {
+        $set: {
+          cart: [],
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+        },
+        $addToSet: {
+          shippingAddresses: {
+            label: 'Checkout',
+            ...shippingAddress,
+            isDefault: false,
+          },
+        },
+      }, { runValidators: true });
+    }
 
     res.status(201).json({
       success: true,

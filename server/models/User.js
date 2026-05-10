@@ -37,7 +37,18 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
   isActive: { type: Boolean, default: true },
 
-  wishlist: [{ type: Number }],
+  wishlist: [{ type: String }],
+
+  cart: [{
+    productId: String,
+    name: String,
+    brand: String,
+    price: Number,
+    quantity: Number,
+    image: String,
+    category: String,
+    origin: String,
+  }],
 
   shippingAddresses: [{
     label:    { type: String, default: 'Home' },

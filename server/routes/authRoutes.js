@@ -6,9 +6,14 @@ import {
   resendOtp,
   login,
   getMe,
+  getMyOrders,
   forgotPassword,
   resetPassword,
   updateProfile,
+  addAddress,
+  deleteAddress,
+  getCart,
+  saveCart,
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 
@@ -25,5 +30,10 @@ router.post('/reset-password',  resetPassword);
 // Protected
 router.get('/me',           protect, getMe);
 router.put('/profile',      protect, updateProfile);
+router.get('/orders',       protect, getMyOrders);
+router.post('/addresses',   protect, addAddress);
+router.delete('/addresses/:id', protect, deleteAddress);
+router.get('/cart',         protect, getCart);
+router.put('/cart',         protect, saveCart);
 
 export default router;
