@@ -62,8 +62,13 @@ const Register: React.FC = () => {
     const res = await verifyEmail(userId, emailOtp);
     setLoading(false);
     if (res.success) {
-      setStep('verify-phone');
-      toast.success('Email verified! Now verify your phone.');
+      if (res.nextStep === 'complete' || res.token) {
+        toast.success('Account verified');
+        navigate('/');
+      } else {
+        setStep('verify-phone');
+        toast.success('Email verified! Now verify your phone.');
+      }
     } else {
       toast.error(res.message || 'Invalid code');
     }

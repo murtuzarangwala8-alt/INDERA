@@ -7,6 +7,7 @@ import crypto from 'crypto';
 
 const allowOtpInResponse = () => process.env.NODE_ENV !== 'production' || process.env.ALLOW_DEV_OTP === 'true';
 const shouldExposeOtp = () => allowOtpInResponse();
+const phoneVerificationRequired = () => process.env.REQUIRE_PHONE_OTP === 'true';
 
 // ── POST /api/auth/register ────────────────────────────────────
 export const register = async (req, res) => {
@@ -28,7 +29,8 @@ export const register = async (req, res) => {
     }
 
     const emailOtp = generateOtp();
-    const phoneOtp = generateOtp();
+    const requirePhoneOtp = phoneVerificationRequired();
+    const phoneOtp = requirePhoneOtp ? generateOtp() : undefined;
     const expiry = otpExpiry();
 
     const user = new User({
@@ -40,16 +42,16 @@ export const register = async (req, res) => {
       emailOtp,
       emailOtpExpiry: expiry,
       phoneOtp,
-      phoneOtpExpiry: expiry,
+      phoneOtpExpiry: requirePhoneOtp ? expiry : undefined,
+      phoneVerified: !requirePhoneOtp,
     });
 
     await user.save();
 
     // Send verifications in parallel
-    const delivery = await Promise.allSettled([
-      sendEmailOtp(email, firstName, emailOtp),
-      sendSmsOtp(phone, phoneOtp),
-    ]);
+    const deliveryTasks = [sendEmailOtp(email, firstName, emailOtp)];
+    if (requirePhoneOtp) deliveryTasks.push(sendSmsOtp(phone, phoneOtp));
+    const delivery = await Promise.allSettled(deliveryTasks);
     const exposeOtp = shouldExposeOtp(delivery);
 
     res.status(201).json({
@@ -58,7 +60,8 @@ export const register = async (req, res) => {
       userId: user._id,
       nextStep: 'verify-email',
       emailOtp: exposeOtp ? emailOtp : undefined,
-      phoneOtp: exposeOtp ? phoneOtp : undefined,
+      phoneOtp: exposeOtp && requirePhoneOtp ? phoneOtp : undefined,
+      phoneVerificationRequired: requirePhoneOtp,
       delivery: delivery.map((item) => item.status),
     });
   } catch (error) {
@@ -87,10 +90,25 @@ export const verifyEmail = async (req, res) => {
     user.emailOtpExpiry = undefined;
     await user.save();
 
+    if (user.phoneVerified || !phoneVerificationRequired()) {
+      if (!user.phoneVerified) {
+        user.phoneVerified = true;
+        await user.save();
+      }
+      const token = generateToken(user._id, user.role);
+      return res.json({
+        success: true,
+        message: 'Account verified successfully',
+        nextStep: 'complete',
+        token,
+        user: user.toSafeObject(),
+      });
+    }
+
     res.json({
       success: true,
       message: 'Email verified successfully',
-      nextStep: user.phoneVerified ? 'complete' : 'verify-phone',
+      nextStep: 'verify-phone',
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -209,7 +227,7 @@ export const login = async (req, res) => {
       });
     }
 
-    if (!user.phoneVerified) {
+    if (!user.phoneVerified && phoneVerificationRequired()) {
       const otp = generateOtp();
       user.phoneOtp = otp;
       user.phoneOtpExpiry = otpExpiry();

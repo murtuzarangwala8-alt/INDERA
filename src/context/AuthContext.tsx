@@ -31,7 +31,7 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   register: (data: RegisterData) => Promise<{ success: boolean; userId?: string; message?: string; emailOtp?: string; phoneOtp?: string }>;
-  verifyEmail: (userId: string, otp: string) => Promise<{ success: boolean; nextStep?: string; message?: string }>;
+  verifyEmail: (userId: string, otp: string) => Promise<{ success: boolean; nextStep?: string; message?: string; token?: string; user?: AuthUser }>;
   verifyPhone: (userId: string, otp: string) => Promise<{ success: boolean; token?: string; message?: string }>;
   resendOtp: (userId: string, type: 'email' | 'phone') => Promise<{ success: boolean; message?: string; otp?: string }>;
   login: (email: string, password: string) => Promise<{ success: boolean; userId?: string; nextStep?: string; message?: string; emailOtp?: string; phoneOtp?: string }>;
@@ -109,7 +109,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, otp }),
     });
-    return res.json();
+    const json = await res.json();
+    if (json.success && json.token) {
+      saveToken(json.token);
+      setUser(json.user);
+      toast.success(`Welcome to INDÃ‰RA, ${json.user.firstName}!`);
+    }
+    return json;
   };
 
   const verifyPhone = async (userId: string, otp: string) => {
