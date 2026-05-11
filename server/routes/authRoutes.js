@@ -1,7 +1,6 @@
 import express from 'express';
 import {
   register,
-  verifyEmail,
   verifyPhone,
   resendOtp,
   login,
@@ -22,7 +21,6 @@ import { adminAuth, protect } from '../middleware/auth.js';
 const router = express.Router();
 
 router.post('/register',        register);
-router.post('/verify-email',    verifyEmail);
 router.post('/verify-phone',    verifyPhone);
 router.post('/resend-otp',      resendOtp);
 router.post('/login',           login);

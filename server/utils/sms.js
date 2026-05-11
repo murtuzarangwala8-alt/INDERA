@@ -30,3 +30,31 @@ export const sendSmsOtp = async (phone, otp) => {
     return { success: false, error: error.message };
   }
 };
+
+export const sendWhatsappOtp = async (phone, otp) => {
+  const twilioClient = getClient();
+
+  if (!twilioClient) {
+    throw new Error('WhatsApp verification is not configured. Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_WHATSAPP_FROM.');
+  }
+
+  const from = process.env.TWILIO_WHATSAPP_FROM || process.env.TWILIO_PHONE_NUMBER;
+  if (!from) {
+    throw new Error('TWILIO_WHATSAPP_FROM is missing.');
+  }
+
+  const fromAddress = from.startsWith('whatsapp:') ? from : `whatsapp:${from}`;
+  const toAddress = phone.startsWith('whatsapp:') ? phone : `whatsapp:${phone}`;
+
+  try {
+    await twilioClient.messages.create({
+      body: `Your INDÉRA WhatsApp verification code is: ${otp}. Valid for 10 minutes.`,
+      from: fromAddress,
+      to: toAddress,
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('WhatsApp OTP send error:', error.message);
+    throw error;
+  }
+};

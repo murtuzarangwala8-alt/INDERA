@@ -1,13 +1,13 @@
 import User from '../models/User.js';
 import Order from '../models/Order.js';
 import { generateToken, generateOtp, otpExpiry, generateResetToken } from '../utils/auth.js';
-import { sendEmailOtp, sendWelcomeEmail, sendPasswordResetEmail } from '../utils/email.js';
-import { sendSmsOtp } from '../utils/sms.js';
+import { sendWelcomeEmail, sendPasswordResetEmail } from '../utils/email.js';
+import { sendSmsOtp, sendWhatsappOtp } from '../utils/sms.js';
 import crypto from 'crypto';
 
 const shouldExposeOtp = () => process.env.NODE_ENV !== 'production';
 const allowSetupResetLink = () => process.env.NODE_ENV !== 'production' || process.env.SHOW_SETUP_CODES === 'true';
-const phoneVerificationRequired = () => process.env.REQUIRE_PHONE_OTP === 'true';
+const phoneVerificationRequired = () => process.env.REQUIRE_WHATSAPP_OTP !== 'false';
 const firstDeliveryError = (delivery) => delivery.find((item) => item.status === 'rejected')?.reason?.message;
 
 // ── POST /api/auth/register ────────────────────────────────────
@@ -29,9 +29,8 @@ export const register = async (req, res) => {
       return res.status(409).json({ success: false, message: 'An account with this phone number already exists' });
     }
 
-    const emailOtp = generateOtp();
     const requirePhoneOtp = phoneVerificationRequired();
-    const phoneOtp = requirePhoneOtp ? generateOtp() : undefined;
+    const phoneOtp = generateOtp();
     const expiry = otpExpiry();
 
     const user = new User({
@@ -40,8 +39,7 @@ export const register = async (req, res) => {
       email,
       phone,
       password,
-      emailOtp,
-      emailOtpExpiry: expiry,
+      emailVerified: true,
       phoneOtp,
       phoneOtpExpiry: requirePhoneOtp ? expiry : undefined,
       phoneVerified: !requirePhoneOtp,
@@ -49,22 +47,18 @@ export const register = async (req, res) => {
 
     await user.save();
 
-    // Send verifications in parallel
-    const deliveryTasks = [sendEmailOtp(email, firstName, emailOtp)];
-    if (requirePhoneOtp) deliveryTasks.push(sendSmsOtp(phone, phoneOtp));
-    const delivery = await Promise.allSettled(deliveryTasks);
+    const delivery = requirePhoneOtp ? await Promise.allSettled([sendWhatsappOtp(phone, phoneOtp)]) : [];
     const exposeOtp = shouldExposeOtp(delivery);
-    const emailError = firstDeliveryError(delivery.slice(0, 1));
+    const whatsappError = firstDeliveryError(delivery);
 
     res.status(201).json({
       success: true,
-      message: emailError ? `Account created, but email could not be sent: ${emailError}` : 'Account created. Please verify your email.',
+      message: whatsappError ? `Account created, but WhatsApp code could not be sent: ${whatsappError}` : 'Account created. Please verify your WhatsApp number.',
       userId: user._id,
-      nextStep: 'verify-email',
-      emailOtp: exposeOtp ? emailOtp : undefined,
+      nextStep: requirePhoneOtp ? 'verify-phone' : 'complete',
       phoneOtp: exposeOtp && requirePhoneOtp ? phoneOtp : undefined,
-      phoneVerificationRequired: requirePhoneOtp,
-      emailSent: !emailError,
+      whatsappVerificationRequired: requirePhoneOtp,
+      whatsappSent: !whatsappError,
       delivery: delivery.map((item) => item.status),
     });
   } catch (error) {
@@ -72,48 +66,6 @@ export const register = async (req, res) => {
       const field = Object.keys(error.keyPattern)[0];
       return res.status(409).json({ success: false, message: `${field} already in use` });
     }
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// ── POST /api/auth/verify-email ────────────────────────────────
-export const verifyEmail = async (req, res) => {
-  try {
-    const { userId, otp } = req.body;
-    if (!userId || !otp) return res.status(400).json({ success: false, message: 'userId and otp are required' });
-
-    const user = await User.findById(userId).select('+emailOtp +emailOtpExpiry');
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    if (user.emailVerified) return res.status(400).json({ success: false, message: 'Email already verified' });
-    if (!user.emailOtp || user.emailOtp !== otp) return res.status(400).json({ success: false, message: 'Invalid OTP' });
-    if (new Date() > user.emailOtpExpiry) return res.status(400).json({ success: false, message: 'OTP expired. Please request a new one.' });
-
-    user.emailVerified = true;
-    user.emailOtp = undefined;
-    user.emailOtpExpiry = undefined;
-    await user.save();
-
-    if (user.phoneVerified || !phoneVerificationRequired()) {
-      if (!user.phoneVerified) {
-        user.phoneVerified = true;
-        await user.save();
-      }
-      const token = generateToken(user._id, user.role);
-      return res.json({
-        success: true,
-        message: 'Account verified successfully',
-        nextStep: 'complete',
-        token,
-        user: user.toSafeObject(),
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Email verified successfully',
-      nextStep: 'verify-phone',
-    });
-  } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -135,26 +87,22 @@ export const verifyPhone = async (req, res) => {
     user.phoneOtpExpiry = undefined;
     await user.save();
 
-    // Both verified — send welcome email and issue token
-    if (user.emailVerified) {
-      try {
-        await sendWelcomeEmail(user.email, user.firstName);
-      } catch (emailError) {
-        console.warn('Welcome email failed:', emailError.message);
-      }
-      const token = generateToken(user._id, user.role);
-      return res.json({
-        success: true,
-        message: 'Account fully verified. Welcome to INDÉRA!',
-        token,
-        user: user.toSafeObject(),
-      });
+    if (!user.emailVerified) {
+      user.emailVerified = true;
+      await user.save();
     }
 
-    res.json({
+    try {
+      await sendWelcomeEmail(user.email, user.firstName);
+    } catch (emailError) {
+      console.warn('Welcome email failed:', emailError.message);
+    }
+    const token = generateToken(user._id, user.role);
+    return res.json({
       success: true,
-      message: 'Phone verified successfully',
-      nextStep: 'verify-email',
+      message: 'WhatsApp verified. Welcome to INDÉRA!',
+      token,
+      user: user.toSafeObject(),
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -173,36 +121,25 @@ export const resendOtp = async (req, res) => {
     const otp = generateOtp();
     const expiry = otpExpiry();
 
-    if (type === 'email') {
-      if (user.emailVerified) return res.status(400).json({ success: false, message: 'Email already verified' });
-      user.emailOtp = otp;
-      user.emailOtpExpiry = expiry;
-      await user.save();
-      const delivery = await Promise.allSettled([sendEmailOtp(user.email, user.firstName, otp)]);
-      const emailError = firstDeliveryError(delivery);
-      if (emailError) {
-        return res.status(502).json({
-          success: false,
-          message: `Email could not be sent: ${emailError}`,
-        });
-      }
-      return res.json({
-        success: true,
-        message: `New OTP sent to your ${type}`,
-        otp: shouldExposeOtp(delivery) ? otp : undefined,
-      });
-    } else {
-      if (user.phoneVerified) return res.status(400).json({ success: false, message: 'Phone already verified' });
-      user.phoneOtp = otp;
-      user.phoneOtpExpiry = expiry;
-      await user.save();
-      const delivery = await Promise.allSettled([sendSmsOtp(user.phone, otp)]);
-      return res.json({
-        success: true,
-        message: `New OTP sent to your ${type}`,
-        otp: shouldExposeOtp(delivery) ? otp : undefined,
-      });
+    if (type !== 'phone') {
+      return res.status(400).json({ success: false, message: 'Email verification is disabled. Use WhatsApp verification.' });
     }
+
+    if (user.phoneVerified) return res.status(400).json({ success: false, message: 'WhatsApp already verified' });
+    user.phoneOtp = otp;
+    user.phoneOtpExpiry = expiry;
+    await user.save();
+    const delivery = await Promise.allSettled([sendWhatsappOtp(user.phone, otp)]);
+    const whatsappError = firstDeliveryError(delivery);
+    if (whatsappError) {
+      return res.status(502).json({ success: false, message: `WhatsApp code could not be sent: ${whatsappError}` });
+    }
+
+    return res.json({
+      success: true,
+      message: 'New code sent to your WhatsApp',
+      otp: shouldExposeOtp(delivery) ? otp : undefined,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -221,33 +158,17 @@ export const login = async (req, res) => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(401).json({ success: false, message: 'Invalid email or password' });
 
-    if (!user.emailVerified) {
-      // Resend OTP
-      const otp = generateOtp();
-      user.emailOtp = otp;
-      user.emailOtpExpiry = otpExpiry();
-      await user.save();
-      const delivery = await Promise.allSettled([sendEmailOtp(user.email, user.firstName, otp)]);
-      const emailError = firstDeliveryError(delivery);
-      return res.status(403).json({
-        success: false,
-        message: emailError ? `Please verify your email first, but email could not be sent: ${emailError}` : 'Please verify your email first. A new OTP has been sent.',
-        userId: user._id,
-        nextStep: 'verify-email',
-        emailSent: !emailError,
-        emailOtp: shouldExposeOtp(delivery) ? otp : undefined,
-      });
-    }
+    if (!user.emailVerified) user.emailVerified = true;
 
     if (!user.phoneVerified && phoneVerificationRequired()) {
       const otp = generateOtp();
       user.phoneOtp = otp;
       user.phoneOtpExpiry = otpExpiry();
       await user.save();
-      const delivery = await Promise.allSettled([sendSmsOtp(user.phone, otp)]);
+      const delivery = await Promise.allSettled([sendWhatsappOtp(user.phone, otp)]);
       return res.status(403).json({
         success: false,
-        message: 'Please verify your phone number. A new OTP has been sent.',
+        message: 'Please verify your WhatsApp number. A new code has been sent.',
         userId: user._id,
         nextStep: 'verify-phone',
         phoneOtp: shouldExposeOtp(delivery) ? otp : undefined,

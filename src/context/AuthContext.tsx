@@ -30,11 +30,10 @@ interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
   loading: boolean;
-  register: (data: RegisterData) => Promise<{ success: boolean; userId?: string; message?: string; emailOtp?: string; phoneOtp?: string; emailSent?: boolean }>;
-  verifyEmail: (userId: string, otp: string) => Promise<{ success: boolean; nextStep?: string; message?: string; token?: string; user?: AuthUser }>;
+  register: (data: RegisterData) => Promise<{ success: boolean; userId?: string; message?: string; phoneOtp?: string; whatsappSent?: boolean; nextStep?: string }>;
   verifyPhone: (userId: string, otp: string) => Promise<{ success: boolean; token?: string; message?: string }>;
   resendOtp: (userId: string, type: 'email' | 'phone') => Promise<{ success: boolean; message?: string; otp?: string }>;
-  login: (email: string, password: string) => Promise<{ success: boolean; userId?: string; nextStep?: string; message?: string; emailOtp?: string; phoneOtp?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; userId?: string; nextStep?: string; message?: string; phoneOtp?: string }>;
   logout: () => void;
   forgotPassword: (email: string) => Promise<{ success: boolean; message?: string; resetUrl?: string; emailSent?: boolean }>;
   resetPassword: (token: string, password: string) => Promise<{ success: boolean; message?: string }>;
@@ -100,21 +99,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       body: JSON.stringify(data),
     });
     const json = await res.json();
-    return json;
-  };
-
-  const verifyEmail = async (userId: string, otp: string) => {
-    const res = await fetch(`${API}/auth/verify-email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, otp }),
-    });
-    const json = await res.json();
-    if (json.success && json.token) {
-      saveToken(json.token);
-      setUser(json.user);
-      toast.success(`Welcome to INDÃ‰RA, ${json.user.firstName}!`);
-    }
     return json;
   };
 
@@ -231,7 +215,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   return (
     <AuthContext.Provider value={{
       user, token, loading,
-      register, verifyEmail, verifyPhone, resendOtp,
+      register, verifyPhone, resendOtp,
       login, logout, forgotPassword, resetPassword,
       updateProfile, addAddress, deleteAddress, fetchOrders, authFetch,
       isAuthenticated: !!user,
