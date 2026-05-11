@@ -5,8 +5,8 @@ import { sendEmailOtp, sendWelcomeEmail, sendPasswordResetEmail } from '../utils
 import { sendSmsOtp } from '../utils/sms.js';
 import crypto from 'crypto';
 
-const allowOtpInResponse = () => process.env.NODE_ENV !== 'production' || process.env.ALLOW_DEV_OTP === 'true';
-const shouldExposeOtp = () => allowOtpInResponse();
+const shouldExposeOtp = () => process.env.NODE_ENV !== 'production' || process.env.SHOW_SETUP_CODES === 'true';
+const allowSetupResetLink = () => process.env.NODE_ENV !== 'production' || process.env.SHOW_SETUP_CODES === 'true';
 const phoneVerificationRequired = () => process.env.REQUIRE_PHONE_OTP === 'true';
 
 // ── POST /api/auth/register ────────────────────────────────────
@@ -291,7 +291,7 @@ export const forgotPassword = async (req, res) => {
       success: true,
       message: emailSent ? 'If that email exists, a reset link has been sent.' : 'Reset link created, but email sending failed.',
       emailSent,
-      resetUrl: allowOtpInResponse() ? resetUrl : undefined,
+      resetUrl: allowSetupResetLink() ? resetUrl : undefined,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
