@@ -6,7 +6,7 @@ import { sendSmsOtp } from '../utils/sms.js';
 import crypto from 'crypto';
 
 const allowOtpInResponse = () => process.env.NODE_ENV !== 'production' || process.env.ALLOW_DEV_OTP === 'true';
-const shouldExposeOtp = (delivery) => allowOtpInResponse() || delivery.some((item) => item.status === 'rejected');
+const shouldExposeOtp = () => allowOtpInResponse();
 
 // ── POST /api/auth/register ────────────────────────────────────
 export const register = async (req, res) => {
