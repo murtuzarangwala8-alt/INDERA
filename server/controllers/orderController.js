@@ -141,9 +141,7 @@ export const createPaymentIntent = async (req, res) => {
       amount: Math.round(amount * 100), // Convert to cents
       currency: process.env.STRIPE_CURRENCY || 'eur',
       metadata: { orderId },
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      payment_method_types: ['card'],
     });
 
     // Update order with payment intent ID

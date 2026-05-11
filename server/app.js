@@ -5,6 +5,7 @@ import connectDB from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import productRoutes from './routes/productRoutes.js';
+import { stripeEnabled } from './config/stripe.js';
 
 dotenv.config();
 
@@ -36,8 +37,9 @@ app.get('/api/config/stripe', (req, res) => {
 
   res.json({
     success: true,
-    publishableKey: hasStripeKey ? publishableKey : null,
-    demoMode: !hasStripeKey,
+    publishableKey: hasStripeKey && stripeEnabled ? publishableKey : null,
+    demoMode: !hasStripeKey || !stripeEnabled,
+    secretConfigured: stripeEnabled,
   });
 });
 
