@@ -279,9 +279,20 @@ export const forgotPassword = async (req, res) => {
     await user.save();
 
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
-    await sendPasswordResetEmail(user.email, user.firstName, resetUrl);
+    let emailSent = true;
+    try {
+      await sendPasswordResetEmail(user.email, user.firstName, resetUrl);
+    } catch (emailError) {
+      emailSent = false;
+      console.warn('Password reset link generated, but email failed:', emailError.message);
+    }
 
-    res.json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+    res.json({
+      success: true,
+      message: emailSent ? 'If that email exists, a reset link has been sent.' : 'Reset link created, but email sending failed.',
+      emailSent,
+      resetUrl: allowOtpInResponse() ? resetUrl : undefined,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

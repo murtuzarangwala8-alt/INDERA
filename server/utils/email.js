@@ -1,14 +1,22 @@
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: process.env.EMAIL_PORT,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+const getTransporter = () => {
+  const port = Number(process.env.EMAIL_PORT || 587);
+
+  if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    throw new Error('Email is not configured. Set EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASSWORD, and EMAIL_FROM.');
+  }
+
+  return nodemailer.createTransport({
+    host: process.env.EMAIL_HOST,
+    port,
+    secure: port === 465,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+  });
+};
 
 // ── Auth emails ──────────────────────────────────────────────
 
@@ -42,7 +50,7 @@ export const sendEmailOtp = async (email, firstName, otp) => {
     `,
   };
   try {
-    await transporter.sendMail(mailOptions);
+    await getTransporter().sendMail(mailOptions);
     console.log(`✅ Email OTP sent to ${email}`);
   } catch (error) {
     console.error('❌ Email OTP failed:', error.message);
@@ -76,7 +84,7 @@ export const sendWelcomeEmail = async (email, firstName) => {
     `,
   };
   try {
-    await transporter.sendMail(mailOptions);
+    await getTransporter().sendMail(mailOptions);
   } catch (error) {
     console.error('❌ Welcome email failed:', error.message);
   }
@@ -106,9 +114,10 @@ export const sendPasswordResetEmail = async (email, firstName, resetUrl) => {
     `,
   };
   try {
-    await transporter.sendMail(mailOptions);
+    await getTransporter().sendMail(mailOptions);
   } catch (error) {
     console.error('❌ Password reset email failed:', error.message);
+    throw error;
   }
 };
 
@@ -217,11 +226,12 @@ export const sendOrderConfirmation = async (order) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await getTransporter().sendMail(mailOptions);
     console.log(`✅ Order confirmation email sent to ${order.customer.email}`);
   } catch (error) {
     console.error('❌ Email sending failed:', error.message);
   }
 };
 
-export default transporter;
+export default getTransporter;
+

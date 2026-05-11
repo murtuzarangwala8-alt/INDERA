@@ -36,7 +36,7 @@ interface AuthContextType {
   resendOtp: (userId: string, type: 'email' | 'phone') => Promise<{ success: boolean; message?: string; otp?: string }>;
   login: (email: string, password: string) => Promise<{ success: boolean; userId?: string; nextStep?: string; message?: string; emailOtp?: string; phoneOtp?: string }>;
   logout: () => void;
-  forgotPassword: (email: string) => Promise<{ success: boolean; message?: string }>;
+  forgotPassword: (email: string) => Promise<{ success: boolean; message?: string; resetUrl?: string; emailSent?: boolean }>;
   resetPassword: (token: string, password: string) => Promise<{ success: boolean; message?: string }>;
   updateProfile: (data: Partial<AuthUser>) => Promise<{ success: boolean; user?: AuthUser; message?: string }>;
   addAddress: (data: ShippingAddress) => Promise<{ success: boolean; user?: AuthUser; message?: string }>;
