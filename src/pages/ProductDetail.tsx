@@ -10,7 +10,7 @@ const ProductDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const products = useProducts();
-  const product = products.find((p) => String(p.id) === id);
+  const product = products.find((p) => String(p.id) === id && p.isActive !== false && !p.hidden);
   const { addToCart, toggleWishlist, wishlist } = useCart();
   const [quantity, setQuantity] = useState(1);
 
@@ -28,7 +28,7 @@ const ProductDetail: React.FC = () => {
   }
 
   const isWishlisted = wishlist.some((item) => item.id === product.id);
-  const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const related = products.filter((p) => p.category === product.category && p.id !== product.id && p.isActive !== false && !p.hidden).slice(0, 4);
 
   const handleAddToCart = () => {
     for (let i = 0; i < quantity; i++) addToCart(product);

@@ -31,14 +31,14 @@ const Products: React.FC = () => {
       const matchSearch = !filters.search || p.name.toLowerCase().includes(filters.search.toLowerCase()) || p.category.toLowerCase().includes(filters.search.toLowerCase());
       const matchStock = !filters.inStock || p.inStock;
       const matchPrice = p.price >= filters.priceRange[0] && p.price <= filters.priceRange[1];
-      return !p.hidden && matchCat && matchSearch && matchStock && matchPrice;
+      return p.isActive !== false && !p.hidden && matchCat && matchSearch && matchStock && matchPrice;
     });
     if (filters.sortBy === 'price-asc') result.sort((a, b) => a.price - b.price);
     if (filters.sortBy === 'price-desc') result.sort((a, b) => b.price - a.price);
     if (filters.sortBy === 'popularity') result.sort((a, b) => b.rating - a.rating);
     if (filters.sortBy === 'newest') result.sort((a, b) => Number(b.id) - Number(a.id));
     return result;
-  }, [filters]);
+  }, [filters, products]);
 
   return (
     <div className="min-h-screen bg-ivory pt-24">

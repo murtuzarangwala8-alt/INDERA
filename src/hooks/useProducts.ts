@@ -42,7 +42,9 @@ export const useProducts = () => {
       try {
         const data = await fetchProducts({ limit: '100' });
         if (active && data.success && Array.isArray(data.products)) {
-          setProducts(data.products.map(normalizeProduct));
+          const liveProducts = data.products.map(normalizeProduct).filter((product: Product) => product.isActive !== false && !product.hidden);
+          setProducts(liveProducts);
+          localStorage.setItem(PRODUCTS_KEY, JSON.stringify(liveProducts));
           return;
         }
       } catch {}
