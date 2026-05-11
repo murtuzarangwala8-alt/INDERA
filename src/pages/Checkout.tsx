@@ -101,20 +101,11 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?
         throw new Error(paymentResponse.error || paymentResponse.message);
       }
 
-      // Confirm card payment
       const cardElement = elements.getElement(CardElement);
       if (!cardElement) {
         throw new Error('Card element not found');
       }
 
-      // For demo: simulate successful payment
-      const paymentIntent = {
-        id: paymentResponse.paymentIntentId,
-        status: 'succeeded',
-      };
-
-      // In production with real Stripe keys, use this:
-      /*
       const { error, paymentIntent } = await stripe.confirmCardPayment(
         paymentResponse.clientSecret,
         {
@@ -128,7 +119,7 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?
                 line1: formData.address,
                 city: formData.city,
                 postal_code: formData.zipCode,
-                country: 'US',
+                country: formData.country,
               },
             },
           },
@@ -138,9 +129,8 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?
       if (error) {
         throw new Error(error.message);
       }
-      */
 
-      if (paymentIntent.status === 'succeeded') {
+      if (paymentIntent?.status === 'succeeded') {
         // Confirm payment on backend
         const confirmResponse = await api.confirmPayment(
           orderResponse.order.id,
@@ -221,7 +211,7 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?
             Processing...
           </>
         ) : (
-          `Pay $${total.toFixed(2)}`
+          `Pay EUR ${total.toFixed(2)}`
         )}
       </button>
     </form>
@@ -423,7 +413,6 @@ const Checkout: React.FC = () => {
                 <input
                   type="tel"
                   placeholder="Phone"
-                  required
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="p-3 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
