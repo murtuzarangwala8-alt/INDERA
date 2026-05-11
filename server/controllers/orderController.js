@@ -11,7 +11,7 @@ export const createOrder = async (req, res) => {
     let userId;
 
     // Validate required fields
-    if (!customer || !shippingAddress || !items || !pricing) {
+    if (!customer || !shippingAddress || !Array.isArray(items) || items.length === 0 || !pricing) {
       return res.status(400).json({ 
         success: false, 
         message: 'Missing required fields' 
@@ -30,7 +30,14 @@ export const createOrder = async (req, res) => {
       user: userId,
       customer,
       shippingAddress,
-      items,
+      items: items.map((item) => ({
+        productId: String(item.productId || item.id || item._id || 'manual-item'),
+        name: item.name || 'INDERA product',
+        brand: item.brand || 'INDERA',
+        price: Number(item.price || 0),
+        quantity: Number(item.quantity || 1),
+        image: item.image || '',
+      })),
       pricing,
       status: 'pending',
       payment: {

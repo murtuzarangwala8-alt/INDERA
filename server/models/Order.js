@@ -7,7 +7,6 @@ const orderSchema = new mongoose.Schema({
   },
   orderNumber: {
     type: String,
-    required: true,
     unique: true,
   },
   customer: {
@@ -57,8 +56,8 @@ const orderSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Generate order number
-orderSchema.pre('save', async function(next) {
+// Generate order number before required-field validation runs.
+orderSchema.pre('validate', async function(next) {
   if (!this.orderNumber) {
     const count = await mongoose.model('Order').countDocuments();
     this.orderNumber = `CL${Date.now()}-${String(count + 1).padStart(5, '0')}`;
