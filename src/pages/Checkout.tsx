@@ -25,6 +25,29 @@ const api = {
 
 let stripePromise: any = null;
 
+const countryToStripeCode = (country: string) => {
+  const normalized = country.trim().toLowerCase();
+  const countries: Record<string, string> = {
+    austria: 'AT',
+    belgium: 'BE',
+    france: 'FR',
+    germany: 'DE',
+    india: 'IN',
+    italy: 'IT',
+    netherlands: 'NL',
+    nederland: 'NL',
+    spain: 'ES',
+    switzerland: 'CH',
+    'united kingdom': 'GB',
+    uk: 'GB',
+    'united states': 'US',
+    usa: 'US',
+  };
+
+  if (/^[a-z]{2}$/i.test(country.trim())) return country.trim().toUpperCase();
+  return countries[normalized] || 'IT';
+};
+
 const buildOrderData = (formData: any, cart: any[]) => {
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = subtotal > 5 ? 0 : 0.50;
@@ -119,7 +142,7 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?
                 line1: formData.address,
                 city: formData.city,
                 postal_code: formData.zipCode,
-                country: formData.country,
+                country: countryToStripeCode(formData.country),
               },
             },
           },
