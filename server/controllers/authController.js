@@ -381,3 +381,56 @@ export const saveCart = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const adminGetUsers = async (req, res) => {
+  try {
+    const { page = 1, limit = 50, search = '' } = req.query;
+    const query = search
+      ? {
+          $or: [
+            { firstName: new RegExp(search, 'i') },
+            { lastName: new RegExp(search, 'i') },
+            { email: new RegExp(search, 'i') },
+            { phone: new RegExp(search, 'i') },
+          ],
+        }
+      : {};
+
+    const users = await User.find(query)
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .skip((Number(page) - 1) * Number(limit));
+
+    const totalUsers = await User.countDocuments(query);
+
+    res.json({
+      success: true,
+      users: users.map((user) => user.toSafeObject()),
+      totalUsers,
+      totalPages: Math.ceil(totalUsers / Number(limit)),
+      currentPage: Number(page),
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const adminDeleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Account not found' });
+    }
+
+    await Order.updateMany({ user: req.params.id }, { $unset: { user: '' } });
+
+    res.json({
+      success: true,
+      message: 'Account deleted from database',
+      deletedUserId: req.params.id,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

@@ -14,8 +14,10 @@ import {
   deleteAddress,
   getCart,
   saveCart,
+  adminGetUsers,
+  adminDeleteUser,
 } from '../controllers/authController.js';
-import { protect } from '../middleware/auth.js';
+import { adminAuth, protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -35,5 +37,9 @@ router.post('/addresses',   protect, addAddress);
 router.delete('/addresses/:id', protect, deleteAddress);
 router.get('/cart',         protect, getCart);
 router.put('/cart',         protect, saveCart);
+
+// Admin account management
+router.get('/admin/users',        adminAuth, adminGetUsers);
+router.delete('/admin/users/:id', adminAuth, adminDeleteUser);
 
 export default router;

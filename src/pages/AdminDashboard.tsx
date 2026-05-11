@@ -10,8 +10,10 @@ import {
   adminCreateProduct,
   adminDeleteCategory,
   adminDeleteProduct,
+  adminDeleteUser,
   adminFetchOrders,
   adminFetchProducts,
+  adminFetchUsers,
   adminLogin,
   adminSeedProducts,
   adminUpdateOrderStatus,
@@ -55,6 +57,7 @@ const AdminDashboard: React.FC = () => {
   const [authLoading, setAuthLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [newCategory, setNewCategory] = useState('');
   const [newCategoryImage, setNewCategoryImage] = useState('');
@@ -65,6 +68,7 @@ const AdminDashboard: React.FC = () => {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [form, setForm] = useState<FormData>(emptyForm);
   const [deleteConfirm, setDeleteConfirm] = useState<string | number | null>(null);
+  const [accountDeleteConfirm, setAccountDeleteConfirm] = useState<string | null>(null);
 
   const categoryNames = useMemo(() => {
     const names = categories.length ? categories.map((category) => category.name) : FALLBACK_CATEGORIES;
@@ -74,9 +78,10 @@ const AdminDashboard: React.FC = () => {
   const loadAdminData = async () => {
     setLoading(true);
     try {
-      const [productsResponse, ordersResponse, categoriesResponse] = await Promise.all([
+      const [productsResponse, ordersResponse, usersResponse, categoriesResponse] = await Promise.all([
         adminFetchProducts({ limit: '100' }),
         adminFetchOrders({ limit: '25' }),
+        adminFetchUsers({ limit: '50' }),
         fetchCategories(),
       ]);
 
@@ -84,6 +89,7 @@ const AdminDashboard: React.FC = () => {
       else toast.error(productsResponse.message || 'Could not load products');
 
       if (ordersResponse.success) setOrders(ordersResponse.orders || []);
+      if (usersResponse.success) setUsers(usersResponse.users || []);
       if (categoriesResponse.success) setCategories(categoriesResponse.categories || []);
     } catch {
       toast.error('Could not connect to admin API');
@@ -284,6 +290,17 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleDeleteAccount = async (id: string) => {
+    const response = await adminDeleteUser(id);
+    if (response.success) {
+      toast.success('Account deleted');
+      setAccountDeleteConfirm(null);
+      await loadAdminData();
+    } else {
+      toast.error(response.message || 'Could not delete account');
+    }
+  };
+
   const filtered = useMemo(() => products.filter((product) => {
     const matchSearch = !search || product.name.toLowerCase().includes(search.toLowerCase());
     const matchCat = !filterCat || product.category === filterCat;
@@ -295,6 +312,7 @@ const AdminDashboard: React.FC = () => {
     visible: products.filter((product) => product.isActive !== false).length,
     hidden: products.filter((product) => product.isActive === false).length,
     orders: orders.length,
+    accounts: users.length,
   };
 
   if (!authenticated) {
@@ -351,12 +369,13 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           {[
             { label: 'Products', value: stats.total, icon: Package, color: 'text-gold-400' },
             { label: 'Visible', value: stats.visible, icon: Eye, color: 'text-green-400' },
             { label: 'Hidden', value: stats.hidden, icon: EyeOff, color: 'text-terracotta' },
             { label: 'Recent Orders', value: stats.orders, icon: Package, color: 'text-blue-400' },
+            { label: 'Accounts', value: stats.accounts, icon: Package, color: 'text-purple-300' },
           ].map((stat) => (
             <div key={stat.label} className="glass-dark rounded-sm p-5" style={{ border: '1px solid rgba(201,168,76,0.1)' }}>
               <div className="flex items-center justify-between mb-2">
@@ -478,6 +497,57 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
+        <h2 className="font-serif text-ivory text-3xl font-light mb-4">Customer Accounts</h2>
+        <div className="glass-dark rounded-sm overflow-hidden mb-10" style={{ border: '1px solid rgba(201,168,76,0.1)' }}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-ivory/5">
+                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Customer</th>
+                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Contact</th>
+                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Verified</th>
+                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Created</th>
+                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((account) => (
+                  <tr key={account._id} className="border-b border-ivory/5">
+                    <td className="px-5 py-4">
+                      <p className="text-ivory text-sm font-sans">{account.firstName} {account.lastName}</p>
+                      <p className="text-ivory/30 text-[10px]">{account.role}</p>
+                    </td>
+                    <td className="px-5 py-4 text-ivory/60 text-xs font-sans">
+                      {account.email}
+                      <p className="text-ivory/30">{account.phone}</p>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className={`text-[9px] tracking-widest uppercase font-sans px-3 py-1.5 border ${
+                        account.emailVerified ? 'border-green-400/30 text-green-400' : 'border-terracotta/30 text-terracotta'
+                      }`}>
+                        {account.emailVerified ? 'Email Verified' : 'Pending Email'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-ivory/40 text-xs font-sans">
+                      {account.createdAt ? new Date(account.createdAt).toLocaleString() : '-'}
+                    </td>
+                    <td className="px-5 py-4">
+                      <button
+                        onClick={() => setAccountDeleteConfirm(account._id)}
+                        className="p-2 border border-ivory/10 text-ivory/40 hover:text-terracotta hover:border-terracotta/30 transition-all rounded-sm"
+                        aria-label={`Delete account ${account.email}`}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {users.length === 0 && <p className="text-ivory/30 text-center py-10 font-serif text-xl">No accounts yet</p>}
+        </div>
+
         <h2 className="font-serif text-ivory text-3xl font-light mb-4">Orders</h2>
         <div className="glass-dark rounded-sm overflow-hidden" style={{ border: '1px solid rgba(201,168,76,0.1)' }}>
           <div className="overflow-x-auto">
@@ -536,6 +606,20 @@ const AdminDashboard: React.FC = () => {
             <div className="flex gap-3">
               <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 py-3 bg-terracotta text-ivory text-xs tracking-widest uppercase font-sans hover:bg-terracotta/80 transition-colors">Hide</button>
               <button onClick={() => setDeleteConfirm(null)} className="flex-1 btn-outline py-3">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {accountDeleteConfirm !== null && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center px-4 bg-obsidian/90 backdrop-blur">
+          <div className="glass-dark rounded-sm p-8 max-w-sm w-full text-center" style={{ border: '1px solid rgba(196,113,74,0.3)' }}>
+            <Trash2 size={32} className="mx-auto mb-4 text-terracotta" />
+            <h3 className="font-serif text-ivory text-2xl font-light mb-2">Delete Account?</h3>
+            <p className="text-ivory/40 text-sm font-sans mb-8">This permanently removes the customer account from MongoDB. Existing orders stay in the admin order history.</p>
+            <div className="flex gap-3">
+              <button onClick={() => handleDeleteAccount(accountDeleteConfirm)} className="flex-1 py-3 bg-terracotta text-ivory text-xs tracking-widest uppercase font-sans hover:bg-terracotta/80 transition-colors">Delete</button>
+              <button onClick={() => setAccountDeleteConfirm(null)} className="flex-1 btn-outline py-3">Cancel</button>
             </div>
           </div>
         </div>

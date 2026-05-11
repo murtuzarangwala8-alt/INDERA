@@ -121,6 +121,20 @@ export const adminFetchOrders = async (params: Record<string, string> = {}) => {
   return res.json();
 };
 
+export const adminFetchUsers = async (params: Record<string, string> = {}) => {
+  const qs = new URLSearchParams(params).toString();
+  const res = await fetch(`${API_URL}/auth/admin/users${qs ? `?${qs}` : ''}`, { headers: adminHeaders() });
+  return res.json();
+};
+
+export const adminDeleteUser = async (id: string) => {
+  const res = await fetch(`${API_URL}/auth/admin/users/${id}`, {
+    method: 'DELETE',
+    headers: adminHeaders(),
+  });
+  return res.json();
+};
+
 export const adminFetchOrderStats = async () => {
   const res = await fetch(`${API_URL}/orders/stats`, { headers: adminHeaders() });
   return res.json();
