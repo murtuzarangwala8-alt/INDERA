@@ -12,6 +12,7 @@ import {
   adminDeleteProduct,
   adminFetchOrders,
   adminFetchProducts,
+  adminLogin,
   adminSeedProducts,
   adminUpdateOrderStatus,
   adminUpdateProduct,
@@ -49,7 +50,9 @@ const normalizeProduct = (product: Product): Product => ({
 
 const AdminDashboard: React.FC = () => {
   const [authenticated, setAuthenticated] = useState(false);
-  const [keyInput, setKeyInput] = useState('');
+  const [adminEmail, setAdminEmail] = useState('admin@indera.it');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -96,16 +99,20 @@ const AdminDashboard: React.FC = () => {
     }
   }, []);
 
-  const handleAuth = (event: React.FormEvent) => {
+  const handleAuth = async (event: React.FormEvent) => {
     event.preventDefault();
-    const expected = import.meta.env.VITE_ADMIN_KEY || 'indera-admin-secret-2024';
-    if (keyInput === expected || keyInput === 'indera2024') {
+    setAuthLoading(true);
+    const response = await adminLogin(adminEmail.trim(), adminPassword);
+    setAuthLoading(false);
+
+    if (response.success && response.adminKey) {
+      sessionStorage.setItem('indera_admin_key', response.adminKey);
       sessionStorage.setItem('indera_admin_auth', 'true');
       setAuthenticated(true);
       toast.success('Welcome to admin');
       loadAdminData();
     } else {
-      toast.error('Invalid admin key');
+      toast.error(response.message || 'Invalid admin login');
     }
   };
 
@@ -299,16 +306,25 @@ const AdminDashboard: React.FC = () => {
             <p className="text-gold-400 text-[10px] tracking-[0.3em] uppercase font-sans mt-1">Products and Orders</p>
           </div>
           <div className="glass-dark rounded-sm p-8" style={{ border: '1px solid rgba(201,168,76,0.15)' }}>
-            <h2 className="font-serif text-ivory text-xl font-light mb-6">Enter Admin Key</h2>
+            <h2 className="font-serif text-ivory text-xl font-light mb-6">Admin Sign In</h2>
             <form onSubmit={handleAuth}>
               <input
-                type="password"
-                value={keyInput}
-                onChange={(event) => setKeyInput(event.target.value)}
-                placeholder="Admin key"
+                type="email"
+                value={adminEmail}
+                onChange={(event) => setAdminEmail(event.target.value)}
+                placeholder="admin@indera.it"
                 className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors mb-4"
               />
-              <button type="submit" className="btn-gold w-full py-3">Enter Dashboard</button>
+              <input
+                type="password"
+                value={adminPassword}
+                onChange={(event) => setAdminPassword(event.target.value)}
+                placeholder="Password"
+                className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors mb-4"
+              />
+              <button type="submit" disabled={authLoading} className="btn-gold w-full py-3 disabled:opacity-50">
+                {authLoading ? 'Signing in...' : 'Enter Dashboard'}
+              </button>
             </form>
           </div>
         </motion.div>

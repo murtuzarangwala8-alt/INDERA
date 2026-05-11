@@ -1,9 +1,18 @@
 const API_URL = import.meta.env.VITE_API_URL || '/api';
-const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || 'indera-admin-secret-2024';
 
-const adminHeaders = {
+const getAdminKey = () => sessionStorage.getItem('indera_admin_key') || import.meta.env.VITE_ADMIN_KEY || '';
+
+const adminHeaders = () => ({
   'Content-Type': 'application/json',
-  'x-admin-key': ADMIN_KEY,
+  'x-admin-key': getAdminKey(),
+});
+export const adminLogin = async (email: string, password: string) => {
+  const res = await fetch(`${API_URL}/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  return res.json();
 };
 
 // ── Public ─────────────────────────────────────────────────────
@@ -28,19 +37,19 @@ export const fetchCategories = async () => {
 
 export const adminFetchProducts = async (params: Record<string, string> = {}) => {
   const qs = new URLSearchParams(params).toString();
-  const res = await fetch(`${API_URL}/admin/products${qs ? `?${qs}` : ''}`, { headers: adminHeaders });
+  const res = await fetch(`${API_URL}/admin/products${qs ? `?${qs}` : ''}`, { headers: adminHeaders() });
   return res.json();
 };
 
 export const adminFetchStats = async () => {
-  const res = await fetch(`${API_URL}/admin/products/stats`, { headers: adminHeaders });
+  const res = await fetch(`${API_URL}/admin/products/stats`, { headers: adminHeaders() });
   return res.json();
 };
 
 export const adminCreateProduct = async (data: Record<string, unknown>) => {
   const res = await fetch(`${API_URL}/admin/products`, {
     method: 'POST',
-    headers: adminHeaders,
+    headers: adminHeaders(),
     body: JSON.stringify(data),
   });
   return res.json();
@@ -49,7 +58,7 @@ export const adminCreateProduct = async (data: Record<string, unknown>) => {
 export const adminUpdateProduct = async (id: string, data: Record<string, unknown>) => {
   const res = await fetch(`${API_URL}/admin/products/${id}`, {
     method: 'PUT',
-    headers: adminHeaders,
+    headers: adminHeaders(),
     body: JSON.stringify(data),
   });
   return res.json();
@@ -58,7 +67,7 @@ export const adminUpdateProduct = async (id: string, data: Record<string, unknow
 export const adminDeleteProduct = async (id: string) => {
   const res = await fetch(`${API_URL}/admin/products/${id}`, {
     method: 'DELETE',
-    headers: adminHeaders,
+    headers: adminHeaders(),
   });
   return res.json();
 };
@@ -66,7 +75,7 @@ export const adminDeleteProduct = async (id: string) => {
 export const adminUpdateStock = async (id: string, stockQuantity: number) => {
   const res = await fetch(`${API_URL}/admin/products/${id}/stock`, {
     method: 'PATCH',
-    headers: adminHeaders,
+    headers: adminHeaders(),
     body: JSON.stringify({ stockQuantity }),
   });
   return res.json();
@@ -75,7 +84,7 @@ export const adminUpdateStock = async (id: string, stockQuantity: number) => {
 export const adminUpdateVisibility = async (id: string, isActive: boolean) => {
   const res = await fetch(`${API_URL}/admin/products/${id}/visibility`, {
     method: 'PATCH',
-    headers: adminHeaders,
+    headers: adminHeaders(),
     body: JSON.stringify({ isActive }),
   });
   return res.json();
@@ -84,7 +93,7 @@ export const adminUpdateVisibility = async (id: string, isActive: boolean) => {
 export const adminCreateCategory = async (data: { name: string; image?: string }) => {
   const res = await fetch(`${API_URL}/admin/categories`, {
     method: 'POST',
-    headers: adminHeaders,
+    headers: adminHeaders(),
     body: JSON.stringify(data),
   });
   return res.json();
@@ -93,7 +102,7 @@ export const adminCreateCategory = async (data: { name: string; image?: string }
 export const adminDeleteCategory = async (id: string) => {
   const res = await fetch(`${API_URL}/admin/categories/${id}`, {
     method: 'DELETE',
-    headers: adminHeaders,
+    headers: adminHeaders(),
   });
   return res.json();
 };
@@ -101,27 +110,28 @@ export const adminDeleteCategory = async (id: string) => {
 export const adminSeedProducts = async () => {
   const res = await fetch(`${API_URL}/admin/seed`, {
     method: 'POST',
-    headers: adminHeaders,
+    headers: adminHeaders(),
   });
   return res.json();
 };
 
 export const adminFetchOrders = async (params: Record<string, string> = {}) => {
   const qs = new URLSearchParams(params).toString();
-  const res = await fetch(`${API_URL}/orders${qs ? `?${qs}` : ''}`, { headers: adminHeaders });
+  const res = await fetch(`${API_URL}/orders${qs ? `?${qs}` : ''}`, { headers: adminHeaders() });
   return res.json();
 };
 
 export const adminFetchOrderStats = async () => {
-  const res = await fetch(`${API_URL}/orders/stats`, { headers: adminHeaders });
+  const res = await fetch(`${API_URL}/orders/stats`, { headers: adminHeaders() });
   return res.json();
 };
 
 export const adminUpdateOrderStatus = async (id: string, status: string) => {
   const res = await fetch(`${API_URL}/orders/${id}`, {
     method: 'PUT',
-    headers: adminHeaders,
+    headers: adminHeaders(),
     body: JSON.stringify({ status }),
   });
   return res.json();
 };
+

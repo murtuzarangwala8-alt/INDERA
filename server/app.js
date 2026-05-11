@@ -41,6 +41,24 @@ app.get('/api/config/stripe', (req, res) => {
   });
 });
 
+app.post('/api/admin/login', (req, res) => {
+  const { email, password } = req.body;
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@indera.it';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'sakina@110';
+
+  if (email === adminEmail && password === adminPassword) {
+    return res.json({
+      success: true,
+      adminKey: process.env.ADMIN_API_KEY,
+    });
+  }
+
+  res.status(401).json({
+    success: false,
+    message: 'Invalid admin email or password',
+  });
+});
+
 app.use(async (req, res, next) => {
   try {
     await connectDB();
