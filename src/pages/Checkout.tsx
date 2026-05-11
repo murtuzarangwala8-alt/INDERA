@@ -88,7 +88,7 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?
       const orderResponse = await api.createOrder(orderData, token);
 
       if (!orderResponse.success) {
-        throw new Error(orderResponse.message);
+        throw new Error(orderResponse.error || orderResponse.message);
       }
 
       // Create payment intent
@@ -98,7 +98,7 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?
       );
 
       if (!paymentResponse.success) {
-        throw new Error(paymentResponse.message);
+        throw new Error(paymentResponse.error || paymentResponse.message);
       }
 
       // Confirm card payment
@@ -244,19 +244,19 @@ const DemoCheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; to
       const orderResponse = await api.createOrder(orderData, token);
 
       if (!orderResponse.success) {
-        throw new Error(orderResponse.message);
+        throw new Error(orderResponse.error || orderResponse.message);
       }
 
       const paymentResponse = await api.createPaymentIntent(totalAmount, orderResponse.order.id);
 
       if (!paymentResponse.success) {
-        throw new Error(paymentResponse.message);
+        throw new Error(paymentResponse.error || paymentResponse.message);
       }
 
       const confirmResponse = await api.confirmPayment(orderResponse.order.id, paymentResponse.paymentIntentId);
 
       if (!confirmResponse.success) {
-        throw new Error(confirmResponse.message);
+        throw new Error(confirmResponse.error || confirmResponse.message);
       }
 
       setOrderNumber(confirmResponse.order.orderNumber);
@@ -522,3 +522,4 @@ const Checkout: React.FC = () => {
 };
 
 export default Checkout;
+

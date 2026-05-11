@@ -4,6 +4,11 @@ import stripe, { stripeEnabled } from '../config/stripe.js';
 import { sendOrderConfirmation } from '../utils/email.js';
 import { verifyToken } from '../utils/auth.js';
 
+const toMoney = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+};
+
 // Create new order
 export const createOrder = async (req, res) => {
   try {
@@ -28,17 +33,32 @@ export const createOrder = async (req, res) => {
 
     const order = new Order({
       user: userId,
-      customer,
-      shippingAddress,
+      customer: {
+        firstName: customer.firstName || 'Guest',
+        lastName: customer.lastName || 'Customer',
+        email: customer.email,
+        phone: customer.phone || '',
+      },
+      shippingAddress: {
+        address: shippingAddress.address,
+        city: shippingAddress.city,
+        zipCode: shippingAddress.zipCode,
+        country: shippingAddress.country || 'Not provided',
+      },
       items: items.map((item) => ({
         productId: String(item.productId || item.id || item._id || 'manual-item'),
         name: item.name || 'INDERA product',
         brand: item.brand || 'INDERA',
-        price: Number(item.price || 0),
+        price: toMoney(item.price),
         quantity: Number(item.quantity || 1),
         image: item.image || '',
       })),
-      pricing,
+      pricing: {
+        subtotal: toMoney(pricing.subtotal),
+        shipping: toMoney(pricing.shipping),
+        tax: toMoney(pricing.tax),
+        total: toMoney(pricing.total),
+      },
       status: 'pending',
       payment: {
         status: 'pending',
@@ -48,20 +68,27 @@ export const createOrder = async (req, res) => {
     await order.save();
 
     if (userId) {
-      await User.findByIdAndUpdate(userId, {
-        $set: {
-          cart: [],
-          firstName: customer.firstName,
-          lastName: customer.lastName,
-        },
-        $addToSet: {
-          shippingAddresses: {
-            label: 'Checkout',
-            ...shippingAddress,
-            isDefault: false,
+      try {
+        await User.findByIdAndUpdate(userId, {
+          $set: {
+            cart: [],
+            firstName: customer.firstName || 'Guest',
+            lastName: customer.lastName || 'Customer',
           },
-        },
-      }, { runValidators: true });
+          $addToSet: {
+            shippingAddresses: {
+              label: 'Checkout',
+              address: shippingAddress.address,
+              city: shippingAddress.city,
+              zipCode: shippingAddress.zipCode,
+              country: shippingAddress.country || 'Not provided',
+              isDefault: false,
+            },
+          },
+        }, { runValidators: true });
+      } catch (profileError) {
+        console.warn('Order saved, but account profile update failed:', profileError.message);
+      }
     }
 
     res.status(201).json({
