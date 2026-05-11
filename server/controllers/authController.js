@@ -5,7 +5,7 @@ import { sendEmailOtp, sendWelcomeEmail, sendPasswordResetEmail } from '../utils
 import { sendSmsOtp } from '../utils/sms.js';
 import crypto from 'crypto';
 
-const shouldExposeOtp = () => process.env.NODE_ENV !== 'production' || process.env.SHOW_SETUP_CODES === 'true';
+const shouldExposeOtp = () => process.env.NODE_ENV !== 'production';
 const allowSetupResetLink = () => process.env.NODE_ENV !== 'production' || process.env.SHOW_SETUP_CODES === 'true';
 const phoneVerificationRequired = () => process.env.REQUIRE_PHONE_OTP === 'true';
 

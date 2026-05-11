@@ -11,16 +11,14 @@ const Register: React.FC = () => {
   const { register, verifyEmail, verifyPhone, resendOtp } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const initialState = location.state as { userId?: string; step?: Step; email?: string; phone?: string; emailOtp?: string; phoneOtp?: string } | null;
+  const initialState = location.state as { userId?: string; step?: Step; email?: string; phone?: string } | null;
 
   const [step, setStep] = useState<Step>(initialState?.step || 'details');
   const [userId, setUserId] = useState(initialState?.userId || '');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [emailOtp, setEmailOtp] = useState(initialState?.emailOtp || '');
-  const [phoneOtp, setPhoneOtp] = useState(initialState?.phoneOtp || '');
-  const [visibleEmailOtp, setVisibleEmailOtp] = useState(initialState?.emailOtp || '');
-  const [visiblePhoneOtp, setVisiblePhoneOtp] = useState(initialState?.phoneOtp || '');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [phoneOtp, setPhoneOtp] = useState('');
   const [resending, setResending] = useState(false);
 
   const [form, setForm] = useState({
@@ -39,16 +37,8 @@ const Register: React.FC = () => {
     setLoading(false);
     if (res.success) {
       setUserId(res.userId!);
-      if (res.emailOtp) {
-        setEmailOtp(res.emailOtp);
-        setVisibleEmailOtp(res.emailOtp);
-      }
-      if (res.phoneOtp) {
-        setPhoneOtp(res.phoneOtp);
-        setVisiblePhoneOtp(res.phoneOtp);
-      }
       setStep('verify-email');
-      toast.success(res.emailOtp ? `Email code: ${res.emailOtp}` : 'Check your email for a verification code');
+      toast.success('Check your email for a verification code');
     } else {
       toast.error(res.message || 'Registration failed');
     }
@@ -93,15 +83,7 @@ const Register: React.FC = () => {
     const res = await resendOtp(userId, type);
     setResending(false);
     if (res.success) {
-      if (res.otp && type === 'email') {
-        setEmailOtp(res.otp);
-        setVisibleEmailOtp(res.otp);
-      }
-      if (res.otp && type === 'phone') {
-        setPhoneOtp(res.otp);
-        setVisiblePhoneOtp(res.otp);
-      }
-      toast.success(res.otp ? `New code: ${res.otp}` : (res.message || 'New code sent'));
+      toast.success(res.message || 'New code sent');
     } else toast.error(res.message || 'Failed to resend');
   };
 
@@ -217,11 +199,6 @@ const Register: React.FC = () => {
 
                 <div className="mb-7">
                   <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Verification Code</label>
-                  {visibleEmailOtp && (
-                    <p className="text-gold-400 text-xs font-sans mb-3">
-                      Setup code: <span className="font-bold tracking-widest">{visibleEmailOtp}</span>
-                    </p>
-                  )}
                   <input
                     value={emailOtp} onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     placeholder="000000" maxLength={6}
@@ -255,11 +232,6 @@ const Register: React.FC = () => {
 
                 <div className="mb-7">
                   <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">SMS Code</label>
-                  {visiblePhoneOtp && (
-                    <p className="text-gold-400 text-xs font-sans mb-3">
-                      Setup code: <span className="font-bold tracking-widest">{visiblePhoneOtp}</span>
-                    </p>
-                  )}
                   <input
                     value={phoneOtp} onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     placeholder="000000" maxLength={6}
