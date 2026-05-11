@@ -30,7 +30,7 @@ interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
   loading: boolean;
-  register: (data: RegisterData) => Promise<{ success: boolean; userId?: string; message?: string; emailOtp?: string; phoneOtp?: string }>;
+  register: (data: RegisterData) => Promise<{ success: boolean; userId?: string; message?: string; emailOtp?: string; phoneOtp?: string; emailSent?: boolean }>;
   verifyEmail: (userId: string, otp: string) => Promise<{ success: boolean; nextStep?: string; message?: string; token?: string; user?: AuthUser }>;
   verifyPhone: (userId: string, otp: string) => Promise<{ success: boolean; token?: string; message?: string }>;
   resendOtp: (userId: string, type: 'email' | 'phone') => Promise<{ success: boolean; message?: string; otp?: string }>;

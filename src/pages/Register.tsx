@@ -38,7 +38,8 @@ const Register: React.FC = () => {
     if (res.success) {
       setUserId(res.userId!);
       setStep('verify-email');
-      toast.success('Check your email for a verification code');
+      if (res.emailSent === false) toast.error(res.message || 'Account created, but email could not be sent');
+      else toast.success('Check your email for a verification code');
     } else {
       toast.error(res.message || 'Registration failed');
     }

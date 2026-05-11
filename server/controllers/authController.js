@@ -8,6 +8,7 @@ import crypto from 'crypto';
 const shouldExposeOtp = () => process.env.NODE_ENV !== 'production';
 const allowSetupResetLink = () => process.env.NODE_ENV !== 'production' || process.env.SHOW_SETUP_CODES === 'true';
 const phoneVerificationRequired = () => process.env.REQUIRE_PHONE_OTP === 'true';
+const firstDeliveryError = (delivery) => delivery.find((item) => item.status === 'rejected')?.reason?.message;
 
 // ── POST /api/auth/register ────────────────────────────────────
 export const register = async (req, res) => {
@@ -53,15 +54,17 @@ export const register = async (req, res) => {
     if (requirePhoneOtp) deliveryTasks.push(sendSmsOtp(phone, phoneOtp));
     const delivery = await Promise.allSettled(deliveryTasks);
     const exposeOtp = shouldExposeOtp(delivery);
+    const emailError = firstDeliveryError(delivery.slice(0, 1));
 
     res.status(201).json({
       success: true,
-      message: 'Account created. Please verify your email and phone number.',
+      message: emailError ? `Account created, but email could not be sent: ${emailError}` : 'Account created. Please verify your email.',
       userId: user._id,
       nextStep: 'verify-email',
       emailOtp: exposeOtp ? emailOtp : undefined,
       phoneOtp: exposeOtp && requirePhoneOtp ? phoneOtp : undefined,
       phoneVerificationRequired: requirePhoneOtp,
+      emailSent: !emailError,
       delivery: delivery.map((item) => item.status),
     });
   } catch (error) {
@@ -176,6 +179,13 @@ export const resendOtp = async (req, res) => {
       user.emailOtpExpiry = expiry;
       await user.save();
       const delivery = await Promise.allSettled([sendEmailOtp(user.email, user.firstName, otp)]);
+      const emailError = firstDeliveryError(delivery);
+      if (emailError) {
+        return res.status(502).json({
+          success: false,
+          message: `Email could not be sent: ${emailError}`,
+        });
+      }
       return res.json({
         success: true,
         message: `New OTP sent to your ${type}`,
@@ -218,11 +228,13 @@ export const login = async (req, res) => {
       user.emailOtpExpiry = otpExpiry();
       await user.save();
       const delivery = await Promise.allSettled([sendEmailOtp(user.email, user.firstName, otp)]);
+      const emailError = firstDeliveryError(delivery);
       return res.status(403).json({
         success: false,
-        message: 'Please verify your email first. A new OTP has been sent.',
+        message: emailError ? `Please verify your email first, but email could not be sent: ${emailError}` : 'Please verify your email first. A new OTP has been sent.',
         userId: user._id,
         nextStep: 'verify-email',
+        emailSent: !emailError,
         emailOtp: shouldExposeOtp(delivery) ? otp : undefined,
       });
     }
