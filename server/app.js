@@ -27,7 +27,18 @@ app.get('/api/health', (req, res) => {
 });
 
 app.get('/api/config/stripe', (req, res) => {
-  res.json({ success: true, publishableKey: process.env.STRIPE_PUBLISHABLE_KEY });
+  const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
+  const hasStripeKey = Boolean(
+    publishableKey &&
+    publishableKey.startsWith('pk_') &&
+    !publishableKey.toLowerCase().includes('replace')
+  );
+
+  res.json({
+    success: true,
+    publishableKey: hasStripeKey ? publishableKey : null,
+    demoMode: !hasStripeKey,
+  });
 });
 
 app.use(async (req, res, next) => {

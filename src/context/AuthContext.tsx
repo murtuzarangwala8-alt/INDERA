@@ -30,11 +30,11 @@ interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
   loading: boolean;
-  register: (data: RegisterData) => Promise<{ success: boolean; userId?: string; message?: string }>;
+  register: (data: RegisterData) => Promise<{ success: boolean; userId?: string; message?: string; emailOtp?: string; phoneOtp?: string }>;
   verifyEmail: (userId: string, otp: string) => Promise<{ success: boolean; nextStep?: string; message?: string }>;
   verifyPhone: (userId: string, otp: string) => Promise<{ success: boolean; token?: string; message?: string }>;
-  resendOtp: (userId: string, type: 'email' | 'phone') => Promise<{ success: boolean; message?: string }>;
-  login: (email: string, password: string) => Promise<{ success: boolean; userId?: string; nextStep?: string; message?: string }>;
+  resendOtp: (userId: string, type: 'email' | 'phone') => Promise<{ success: boolean; message?: string; otp?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; userId?: string; nextStep?: string; message?: string; emailOtp?: string; phoneOtp?: string }>;
   logout: () => void;
   forgotPassword: (email: string) => Promise<{ success: boolean; message?: string }>;
   resetPassword: (token: string, password: string) => Promise<{ success: boolean; message?: string }>;

@@ -25,6 +25,45 @@ const api = {
 
 let stripePromise: any = null;
 
+const buildOrderData = (formData: any, cart: any[]) => {
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const shipping = subtotal > 5 ? 0 : 0.50;
+  const tax = subtotal * 0.1;
+  const totalAmount = subtotal + shipping + tax;
+
+  return {
+    totalAmount,
+    orderData: {
+      customer: {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+      },
+      shippingAddress: {
+        address: formData.address,
+        city: formData.city,
+        zipCode: formData.zipCode,
+        country: formData.country,
+      },
+      items: cart.map(item => ({
+        productId: String(item.id),
+        name: item.name,
+        brand: item.brand,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image,
+      })),
+      pricing: {
+        subtotal,
+        shipping,
+        tax,
+        total: totalAmount,
+      },
+    },
+  };
+};
+
 const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?: string | null }> = ({ total, formData, cart, token }) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -44,41 +83,7 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?
     setProcessing(true);
 
     try {
-      // Calculate pricing
-      const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const shipping = subtotal > 5 ? 0 : 0.50;
-      const tax = subtotal * 0.1;
-      const totalAmount = subtotal + shipping + tax;
-
-      // Create order
-      const orderData = {
-        customer: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-        },
-        shippingAddress: {
-          address: formData.address,
-          city: formData.city,
-          zipCode: formData.zipCode,
-          country: formData.country,
-        },
-        items: cart.map(item => ({
-          productId: String(item.id),
-          name: item.name,
-          brand: item.brand,
-          price: item.price,
-          quantity: item.quantity,
-          image: item.image,
-        })),
-        pricing: {
-          subtotal,
-          shipping,
-          tax,
-          total: totalAmount,
-        },
-      };
+      const { orderData, totalAmount } = buildOrderData(formData, cart);
 
       const orderResponse = await api.createOrder(orderData, token);
 
@@ -217,6 +222,97 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?
           </>
         ) : (
           `Pay $${total.toFixed(2)}`
+        )}
+      </button>
+    </form>
+  );
+};
+
+const DemoCheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?: string | null }> = ({ total, formData, cart, token }) => {
+  const navigate = useNavigate();
+  const { clearCart } = useCart();
+  const [processing, setProcessing] = useState(false);
+  const [orderComplete, setOrderComplete] = useState(false);
+  const [orderNumber, setOrderNumber] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProcessing(true);
+
+    try {
+      const { orderData, totalAmount } = buildOrderData(formData, cart);
+      const orderResponse = await api.createOrder(orderData, token);
+
+      if (!orderResponse.success) {
+        throw new Error(orderResponse.message);
+      }
+
+      const paymentResponse = await api.createPaymentIntent(totalAmount, orderResponse.order.id);
+
+      if (!paymentResponse.success) {
+        throw new Error(paymentResponse.message);
+      }
+
+      const confirmResponse = await api.confirmPayment(orderResponse.order.id, paymentResponse.paymentIntentId);
+
+      if (!confirmResponse.success) {
+        throw new Error(confirmResponse.message);
+      }
+
+      setOrderNumber(confirmResponse.order.orderNumber);
+      setOrderComplete(true);
+      clearCart();
+      toast.success('Order placed successfully!');
+
+      setTimeout(() => {
+        navigate('/');
+      }, 3000);
+    } catch (error: any) {
+      console.error('Checkout error:', error);
+      toast.error(error.message || 'Order failed. Please try again.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  if (orderComplete) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+        <CheckCircle size={80} className="mx-auto mb-6 text-green-500" />
+        <h1 className="text-4xl font-bold mb-4">Order Confirmed!</h1>
+        <p className="text-xl text-gray-600 dark:text-gray-400 mb-4">
+          Thank you for your purchase!
+        </p>
+        <p className="text-lg mb-8">
+          Order Number: <span className="font-bold text-gold-500">{orderNumber}</span>
+        </p>
+        <p className="text-gray-500">Your order is saved in your account and admin dashboard.</p>
+        <p className="text-gray-500 mt-2">Redirecting to home page...</p>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold mb-3">Order Payment</h2>
+        <p className="text-sm text-gray-500">
+          Stripe keys are not configured, so this checkout will place a demo order and save it immediately.
+        </p>
+      </div>
+
+      <button
+        type="submit"
+        disabled={processing}
+        className="w-full bg-gold-500 text-black py-4 rounded-lg hover:bg-gold-600 transition font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      >
+        {processing ? (
+          <>
+            <Loader className="animate-spin" size={20} />
+            Placing order...
+          </>
+        ) : (
+          `Place Order $${total.toFixed(2)}`
         )}
       </button>
     </form>
@@ -375,10 +471,12 @@ const Checkout: React.FC = () => {
               </div>
             </div>
 
-            {stripePromise && (
+            {stripePromise ? (
               <Elements stripe={stripePromise}>
                 <CheckoutForm total={total} formData={formData} cart={cart} token={token} />
               </Elements>
+            ) : (
+              <DemoCheckoutForm total={total} formData={formData} cart={cart} token={token} />
             )}
           </div>
         </div>

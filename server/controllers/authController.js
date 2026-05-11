@@ -5,6 +5,9 @@ import { sendEmailOtp, sendWelcomeEmail, sendPasswordResetEmail } from '../utils
 import { sendSmsOtp } from '../utils/sms.js';
 import crypto from 'crypto';
 
+const allowOtpInResponse = () => process.env.NODE_ENV !== 'production' || process.env.ALLOW_DEV_OTP === 'true';
+const shouldExposeOtp = (delivery) => allowOtpInResponse() || delivery.some((item) => item.status === 'rejected');
+
 // ── POST /api/auth/register ────────────────────────────────────
 export const register = async (req, res) => {
   try {
@@ -47,15 +50,15 @@ export const register = async (req, res) => {
       sendEmailOtp(email, firstName, emailOtp),
       sendSmsOtp(phone, phoneOtp),
     ]);
-    const devOtp = process.env.NODE_ENV !== 'production' || process.env.ALLOW_DEV_OTP === 'true';
+    const exposeOtp = shouldExposeOtp(delivery);
 
     res.status(201).json({
       success: true,
       message: 'Account created. Please verify your email and phone number.',
       userId: user._id,
       nextStep: 'verify-email',
-      emailOtp: devOtp ? emailOtp : undefined,
-      phoneOtp: devOtp ? phoneOtp : undefined,
+      emailOtp: exposeOtp ? emailOtp : undefined,
+      phoneOtp: exposeOtp ? phoneOtp : undefined,
       delivery: delivery.map((item) => item.status),
     });
   } catch (error) {
@@ -113,7 +116,11 @@ export const verifyPhone = async (req, res) => {
 
     // Both verified — send welcome email and issue token
     if (user.emailVerified) {
-      await sendWelcomeEmail(user.email, user.firstName);
+      try {
+        await sendWelcomeEmail(user.email, user.firstName);
+      } catch (emailError) {
+        console.warn('Welcome email failed:', emailError.message);
+      }
       const token = generateToken(user._id, user.role);
       return res.json({
         success: true,
@@ -150,20 +157,24 @@ export const resendOtp = async (req, res) => {
       user.emailOtp = otp;
       user.emailOtpExpiry = expiry;
       await user.save();
-      try { await sendEmailOtp(user.email, user.firstName, otp); } catch {}
+      const delivery = await Promise.allSettled([sendEmailOtp(user.email, user.firstName, otp)]);
+      return res.json({
+        success: true,
+        message: `New OTP sent to your ${type}`,
+        otp: shouldExposeOtp(delivery) ? otp : undefined,
+      });
     } else {
       if (user.phoneVerified) return res.status(400).json({ success: false, message: 'Phone already verified' });
       user.phoneOtp = otp;
       user.phoneOtpExpiry = expiry;
       await user.save();
-      try { await sendSmsOtp(user.phone, otp); } catch {}
+      const delivery = await Promise.allSettled([sendSmsOtp(user.phone, otp)]);
+      return res.json({
+        success: true,
+        message: `New OTP sent to your ${type}`,
+        otp: shouldExposeOtp(delivery) ? otp : undefined,
+      });
     }
-
-    res.json({
-      success: true,
-      message: `New OTP sent to your ${type}`,
-      otp: (process.env.NODE_ENV !== 'production' || process.env.ALLOW_DEV_OTP === 'true') ? otp : undefined,
-    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -188,12 +199,13 @@ export const login = async (req, res) => {
       user.emailOtp = otp;
       user.emailOtpExpiry = otpExpiry();
       await user.save();
-      await sendEmailOtp(user.email, user.firstName, otp);
+      const delivery = await Promise.allSettled([sendEmailOtp(user.email, user.firstName, otp)]);
       return res.status(403).json({
         success: false,
         message: 'Please verify your email first. A new OTP has been sent.',
         userId: user._id,
         nextStep: 'verify-email',
+        emailOtp: shouldExposeOtp(delivery) ? otp : undefined,
       });
     }
 
@@ -202,12 +214,13 @@ export const login = async (req, res) => {
       user.phoneOtp = otp;
       user.phoneOtpExpiry = otpExpiry();
       await user.save();
-      await sendSmsOtp(user.phone, otp);
+      const delivery = await Promise.allSettled([sendSmsOtp(user.phone, otp)]);
       return res.status(403).json({
         success: false,
         message: 'Please verify your phone number. A new OTP has been sent.',
         userId: user._id,
         nextStep: 'verify-phone',
+        phoneOtp: shouldExposeOtp(delivery) ? otp : undefined,
       });
     }
 

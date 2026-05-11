@@ -25,11 +25,11 @@ const Login: React.FC = () => {
     if (res.success) {
       navigate(from, { replace: true });
     } else if (res.nextStep === 'verify-email') {
-      toast.error(res.message || 'Please verify your email');
-      navigate('/register', { state: { userId: res.userId, step: 'verify-email', email } });
+      toast.error(res.emailOtp ? `Email code: ${res.emailOtp}` : (res.message || 'Please verify your email'));
+      navigate('/register', { state: { userId: res.userId, step: 'verify-email', email, emailOtp: res.emailOtp } });
     } else if (res.nextStep === 'verify-phone') {
-      toast.error(res.message || 'Please verify your phone');
-      navigate('/register', { state: { userId: res.userId, step: 'verify-phone' } });
+      toast.error(res.phoneOtp ? `Phone code: ${res.phoneOtp}` : (res.message || 'Please verify your phone'));
+      navigate('/register', { state: { userId: res.userId, step: 'verify-phone', phoneOtp: res.phoneOtp } });
     } else {
       toast.error(res.message || 'Login failed');
     }
