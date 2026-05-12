@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { OAuthButtons } from '../components/OAuthButtons';
+// import { OAuthButtons } from '../components/OAuthButtons';
 import toast from 'react-hot-toast';
 
 const Login: React.FC = () => {
@@ -56,7 +56,7 @@ const Login: React.FC = () => {
           <h2 className="font-serif text-ivory text-2xl font-light mb-1">Welcome Back</h2>
           <p className="text-ivory/40 text-xs font-sans mb-8">Sign in to your INDÉRA account</p>
 
-          <OAuthButtons />
+          {/* <OAuthButtons /> */}
 
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
