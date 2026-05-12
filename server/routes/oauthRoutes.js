@@ -65,4 +65,72 @@ router.post('/google/verify', async (req, res) => {
   }
 });
 
+// Apple OAuth verification endpoint
+router.post('/apple/verify', async (req, res) => {
+  try {
+    const { identityToken, user: appleUser } = req.body;
+    
+    if (!identityToken) {
+      return res.status(400).json({ success: false, message: 'Identity token is required' });
+    }
+
+    // Decode Apple identity token (JWT)
+    const tokenParts = identityToken.split('.');
+    const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+    
+    const appleId = payload.sub;
+    const email = payload.email;
+
+    if (!appleId) {
+      return res.status(400).json({ success: false, message: 'Invalid Apple token' });
+    }
+
+    // Check if user exists
+    let user = await User.findOne({ $or: [{ appleId }, { email: email?.toLowerCase() }] });
+
+    if (user) {
+      // Update Apple ID if not set
+      if (!user.appleId) {
+        user.appleId = appleId;
+        await user.save();
+      }
+    } else {
+      // Create new user
+      // Apple provides name only on first sign-in
+      const firstName = appleUser?.name?.firstName || 'User';
+      const lastName = appleUser?.name?.lastName || '';
+      
+      user = new User({
+        appleId,
+        firstName,
+        lastName,
+        email: email?.toLowerCase() || `apple_${appleId}@indera.local`,
+        emailVerified: true,
+        phoneVerified: true,
+        phone: '',
+        password: Math.random().toString(36).substring(2),
+      });
+
+      await user.save();
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Generate JWT token
+    const jwtToken = generateToken(user._id, user.role);
+
+    res.json({
+      success: true,
+      token: jwtToken,
+      user: user.toSafeObject(),
+      message: `Welcome${user.firstName ? ', ' + user.firstName : ''}!`,
+    });
+  } catch (error) {
+    console.error('Apple OAuth error:', error);
+    res.status(500).json({ success: false, message: 'Apple authentication failed' });
+  }
+});
+
 export default router;
