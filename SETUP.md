@@ -27,7 +27,7 @@
 Edit `server/.env`:
 
 ```env
-MONGODB_URI=mongodb://localhost:27017/chronolux-watches
+MONGODB_URI=mongodb://localhost:27017/indera-jewelry
 STRIPE_SECRET_KEY=sk_test_YOUR_KEY_HERE
 STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE
 ```

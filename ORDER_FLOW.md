@@ -3,7 +3,7 @@
 ## Customer Journey
 
 ```
-1. Browse Products
+1. Browse Jewelry
    ↓
 2. Add to Cart
    ↓
@@ -34,7 +34,7 @@ FRONTEND (React):
    ↓
 BACKEND (Express):
 3. Creates order in MongoDB
-4. Generates order number (e.g., CL1234567890-00001)
+4. Generates order number (e.g., IN1234567890-00001)
 5. Returns order ID
    ↓
 FRONTEND:
@@ -75,7 +75,7 @@ FRONTEND:
 ```json
 {
   "_id": "65abc123...",
-  "orderNumber": "CL1701234567-00001",
+  "orderNumber": "IN1701234567-00001",
   "customer": {
     "firstName": "John",
     "lastName": "Doe",
@@ -91,9 +91,9 @@ FRONTEND:
   "items": [
     {
       "productId": 1,
-      "name": "Royal Submariner",
-      "brand": "ChronoLux",
-      "price": 12999,
+      "name": "Minimal Jhumka Earrings",
+      "brand": "INDÉRA",
+      "price": 299,
       "quantity": 1,
       "image": "https://..."
     }
@@ -105,10 +105,10 @@ FRONTEND:
     "transactionId": "pi_abc123..."
   },
   "pricing": {
-    "subtotal": 12999,
+    "subtotal": 299,
     "shipping": 0,
-    "tax": 1299.90,
-    "total": 14298.90
+    "tax": 29.90,
+    "total": 328.90
   },
   "status": "processing",
   "createdAt": "2024-01-15T10:30:00Z",

@@ -1,4 +1,4 @@
-# ChronoLux Watches - Backend API
+# INDÉRA - Backend API
 
 Complete backend API with payment processing and order management.
 
@@ -49,9 +49,9 @@ NODE_ENV=development
 
 # MongoDB - Choose one:
 # Local:
-MONGODB_URI=mongodb://localhost:27017/chronolux-watches
+MONGODB_URI=mongodb://localhost:27017/indera-jewelry
 # Or Atlas:
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/chronolux-watches
+# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/indera-jewelry
 
 # Stripe Keys (from stripe.com dashboard)
 STRIPE_SECRET_KEY=sk_test_your_actual_key_here
@@ -62,7 +62,7 @@ EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USER=your-email@gmail.com
 EMAIL_PASSWORD=your-app-password
-EMAIL_FROM=ChronoLux Watches <noreply@chronolux.com>
+EMAIL_FROM=INDÉRA <noreply@indera.com>
 
 FRONTEND_URL=http://localhost:5173
 ```
@@ -261,7 +261,7 @@ VITE_API_URL=https://your-backend-url.com/api
 ## Support
 
 For issues or questions:
-- Email: support@chronolux.com
+- Email: support@indera.com
 - Check logs in console
 - Review Stripe dashboard for payment issues
 

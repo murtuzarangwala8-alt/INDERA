@@ -1,4 +1,4 @@
-# 🚀 QUICK START - CHRONOLUX WATCHES
+# 🚀 QUICK START - INDÉRA
 
 ## ✅ READY TO RUN!
 
@@ -15,7 +15,7 @@ Everything is configured with $0.50 test prices!
 cd C:\chronolux-watches\server
 npm start
 ```
-Wait for: "🚀 ChronoLux Backend Server"
+Wait for: "🚀 INDÉRA Backend Server"
 
 **Command Prompt 2 (Frontend):**
 ```bash
@@ -39,7 +39,7 @@ http://localhost:5173/admin
 ## 🛒 TEST THE CHECKOUT
 
 1. Click "Shop Collection"
-2. Click cart icon on any product
+2. Click cart icon on any jewelry piece
 3. Click cart icon in navbar (top right)
 4. Click "Proceed to Checkout"
 5. Fill in the form:
@@ -55,7 +55,7 @@ http://localhost:5173/admin
    - Card: 1234 5678 9012 3456
    - Expiry: 12/25
    - CVC: 123
-7. Click "Pay $1.05" (or similar)
+7. Click "Pay" button
 8. See order confirmation!
 
 ---
@@ -74,15 +74,9 @@ You'll see:
 
 ## 💰 CURRENT PRICES
 
-- All products: **$0.50**
-- Shipping: **$0.50** (FREE if order > $5)
+- Products: **Test pricing**
+- Shipping: **Calculated at checkout** (FREE if order > threshold)
 - Tax: **10%** of subtotal
-
-Example order:
-- 1 watch: $0.50
-- Shipping: $0.50
-- Tax: $0.05
-- **Total: $1.05**
 
 ---
 
@@ -99,7 +93,7 @@ If checkout page shows error:
 
 ## 📝 WHAT'S INCLUDED
 
-✅ 12 luxury watches ($0.50 each)
+✅ Premium Indo-European jewelry collection
 ✅ Shopping cart
 ✅ Wishlist
 ✅ Search & filters
@@ -115,8 +109,8 @@ If checkout page shows error:
 
 - Toggle dark mode (moon icon)
 - Add to wishlist (heart icon)
-- Search products
-- Filter by category
+- Search jewelry pieces
+- Filter by collection
 - View product details
 - Mobile responsive (resize browser)
 
@@ -154,7 +148,7 @@ If checkout page shows error:
 ## 🎉 YOU'RE READY!
 
 Your e-commerce platform is running with:
-- ✅ $0.50 test prices
+- ✅ Test pricing
 - ✅ Demo payment (no real Stripe needed)
 - ✅ No database needed (simple mode)
 - ✅ Full order management

@@ -19,13 +19,15 @@ const userSchema = new mongoose.Schema({
 
   phone: {
     type: String,
-    required: [true, 'Phone number is required'],
-    unique: true,
     trim: true,
   },
   phoneVerified: { type: Boolean, default: false },
   phoneOtp:      { type: String },
   phoneOtpExpiry:{ type: Date },
+
+  // OAuth fields
+  googleId: { type: String, unique: true, sparse: true },
+  appleId: { type: String, unique: true, sparse: true },
 
   password: {
     type: String,

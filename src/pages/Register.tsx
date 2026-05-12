@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, ArrowRight, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { OAuthButtons } from '../components/OAuthButtons';
 import toast from 'react-hot-toast';
 
 type Step = 'details' | 'verify-phone';
@@ -126,6 +127,8 @@ const Register: React.FC = () => {
               <motion.form key="details" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleRegister}>
                 <h2 className="font-serif text-ivory text-2xl font-light mb-1">Create Account</h2>
                 <p className="text-ivory/40 text-xs font-sans mb-7">Join the INDERA private collection</p>
+
+                <OAuthButtons />
 
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div>

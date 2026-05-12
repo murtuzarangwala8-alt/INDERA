@@ -1,4 +1,4 @@
-# 🎉 ChronoLux Watches - Complete E-Commerce Platform
+# 🎉 INDÉRA - Complete E-Commerce Platform
 
 ## ✅ What You Have
 
@@ -12,7 +12,7 @@
 ## 📁 Project Structure
 
 ```
-chronolux-watches/
+indera/
 ├── src/                    # Frontend React app
 │   ├── components/         # Reusable UI components
 │   ├── pages/             # Page components
@@ -68,10 +68,10 @@ npm run dev
 ## 🎯 Features You Can Use Right Now
 
 ### Customer Features
-1. **Browse Products** - 12 luxury watches included
-2. **Search & Filter** - By category, price, color
+1. **Browse Products** - Premium Indo-European jewelry collection
+2. **Search & Filter** - By category, price, collection
 3. **Shopping Cart** - Add, remove, update quantities
-4. **Wishlist** - Save favorite products
+4. **Wishlist** - Save favorite pieces
 5. **Dark Mode** - Toggle theme
 6. **Checkout** - Complete payment flow
 7. **Order Confirmation** - Email receipt
@@ -114,7 +114,7 @@ VITE_API_URL=http://localhost:5000/api
 ### Backend: `server/.env`
 ```
 PORT=5000
-MONGODB_URI=mongodb://localhost:27017/chronolux-watches
+MONGODB_URI=mongodb://localhost:27017/indera-jewelry
 STRIPE_SECRET_KEY=sk_test_YOUR_KEY
 STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY
 ```
@@ -166,7 +166,7 @@ GET    /api/config/stripe          - Get Stripe key
 
 ## 📦 What Happens When Customer Orders
 
-1. Customer adds products to cart
+1. Customer adds jewelry pieces to cart
 2. Goes to checkout
 3. Enters shipping information
 4. Enters payment card (Stripe)
@@ -210,11 +210,12 @@ npm run build
 
 ## 📝 Sample Data
 
-12 watches included:
-- 3 Luxury watches ($4,599 - $12,999)
-- 3 Sport watches ($199 - $1,299)
-- 4 Classic watches ($299 - $8,999)
-- 2 Smart watches ($349 - $449)
+Premium jewelry collections:
+- Minimal Jhumkas - Modern Indian earrings
+- Pearl Fusion - South Sea pearls with European design
+- Indo-European Necklaces - Statement pieces
+- Modern Kundan - Contemporary stone-setting
+- Festival Sets - Bridal and celebration jewelry
 
 ## 🎓 Learning Resources
 
@@ -264,4 +265,4 @@ Your complete e-commerce platform is ready to use:
 5. Test checkout with card 4242 4242 4242 4242
 6. View orders at http://localhost:5173/admin
 
-**Enjoy your luxury watch e-commerce platform! 🚀⌚**
+**Enjoy your premium jewelry e-commerce platform! 🚀💎**

@@ -1,10 +1,10 @@
-# ✅ DONE! PRICES CHANGED TO $0.50
+# ✅ DONE! PRICES CONFIGURED FOR TESTING
 
-All product prices are now $0.50 for testing!
+Product prices are configured for testing!
 
 ## What Changed:
-✅ All 12 products now cost $0.50
-✅ Shipping is $0.50 (FREE if order > $5)
+✅ Product prices configured for testing
+✅ Shipping calculated at checkout
 ✅ Tax is 10% of subtotal
 
 ## How to Run:
@@ -25,21 +25,19 @@ npm run dev
 http://localhost:5173
 
 ## Test Checkout:
-1. Add any product ($0.50)
+1. Add any jewelry piece
 2. Go to cart
 3. Click "Proceed to Checkout"
 4. Fill in form
 5. Enter any card details (demo mode)
 6. Click Pay
 
-Total will be around $1.05 (product + shipping + tax)
-
 ## To Connect Real Stripe:
 See: PRICE_AND_STRIPE_SETUP.md
 
 ## Current Status:
-- ✅ Prices: $0.50
-- ✅ Shipping: $0.50
+- ✅ Prices: Configured for testing
+- ✅ Shipping: Calculated at checkout
 - ✅ Backend: Simple mode (no database needed)
 - ✅ Payment: Demo mode (no real Stripe needed)
 

@@ -1,47 +1,35 @@
-# 🔧 HOW TO CHANGE PRICES TO 50 CENTS & CONNECT REAL STRIPE
+# 🔧 HOW TO CHANGE PRICES & CONNECT REAL STRIPE
 
-## PART 1: CHANGE ALL PRICES TO $0.50 FOR TESTING
+## PART 1: CHANGE PRODUCT PRICES FOR TESTING
 
 ### Step 1: Edit Product Prices
 
 Open: `C:\chronolux-watches\src\data\products.ts`
 
-**Find this section (around line 7-20):**
+**Find product entries and update prices as needed:**
 ```typescript
 {
   id: 1,
-  name: 'Royal Submariner',
-  brand: 'ChronoLux',
-  price: 12999,  // ← CHANGE THIS
+  name: 'Minimal Jhumka Earrings',
+  brand: 'INDÉRA',
+  price: 299,  // ← CHANGE THIS
 ```
 
-**Change ALL prices to 0.50:**
+**Change prices to your test values:**
 ```typescript
 {
   id: 1,
-  name: 'Royal Submariner',
-  brand: 'ChronoLux',
+  name: 'Minimal Jhumka Earrings',
+  brand: 'INDÉRA',
   price: 0.50,  // ← CHANGED
 ```
 
-**Do this for ALL 12 products (id: 1 through 12)**
+**Update all jewelry products with your desired test prices**
 
 ### Quick Replace Method:
 1. Open `src\data\products.ts`
 2. Press `Ctrl + H` (Find and Replace)
-3. Replace each price:
-   - `price: 12999,` → `price: 0.50,`
-   - `price: 8999,` → `price: 0.50,`
-   - `price: 599,` → `price: 0.50,`
-   - `price: 199,` → `price: 0.50,`
-   - `price: 449,` → `price: 0.50,`
-   - `price: 6999,` → `price: 0.50,`
-   - `price: 299,` → `price: 0.50,`
-   - `price: 1299,` → `price: 0.50,`
-   - `price: 4599,` → `price: 0.50,`
-   - `price: 899,` → `price: 0.50,`
-   - `price: 349,` → `price: 0.50,`
-   - `price: 2499,` → `price: 0.50,`
+3. Replace each price with your test values
 
 ### Step 2: Adjust Shipping Threshold
 
@@ -258,10 +246,10 @@ npm run dev
 
 ## SUMMARY OF CHANGES
 
-### For $0.50 Prices:
-✅ `src/data/products.ts` - Change all `price:` values to `0.50`
-✅ `src/pages/Cart.tsx` - Change `500` to `5` and `50` to `0.50`
-✅ `src/pages/Checkout.tsx` - Change `500` to `5` and `50` to `0.50`
+### For Test Prices:
+✅ `src/data/products.ts` - Change all `price:` values to your test amounts
+✅ `src/pages/Cart.tsx` - Adjust shipping thresholds if needed
+✅ `src/pages/Checkout.tsx` - Adjust shipping thresholds if needed
 
 ### For Real Stripe:
 ✅ Get API keys from stripe.com
@@ -275,8 +263,8 @@ npm run dev
 
 ## QUICK TEST CHECKLIST
 
-- [ ] All products show $0.50
-- [ ] Shipping is $0.50 (or FREE if total > $5)
+- [ ] All jewelry products show correct test prices
+- [ ] Shipping calculation works correctly
 - [ ] Checkout page loads
 - [ ] Can enter card details
 - [ ] Payment processes successfully
