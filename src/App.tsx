@@ -17,6 +17,7 @@ import Login from './pages/Login';
 import { ForgotPassword, ResetPassword } from './pages/ForgotPassword';
 import Account from './pages/Account';
 import AdminDashboard from './pages/AdminDashboard';
+import Returns from './pages/Returns';
 
 // Auth pages use full-screen dark layout — no Navbar/Footer
 const AuthLayout = ({ children }: { children: React.ReactNode }) => <>{children}</>;
@@ -47,6 +48,7 @@ function App() {
                     <Route path="/wishlist" element={<Wishlist />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
+                    <Route path="/returns" element={<Returns />} />
                     <Route path="/account" element={<Account />} />
                     <Route path="/admin" element={<AdminDashboard />} />
                   </Routes>
