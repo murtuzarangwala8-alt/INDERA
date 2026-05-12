@@ -65,6 +65,71 @@ router.post('/google/verify', async (req, res) => {
   }
 });
 
+// Google One Tap verification endpoint
+router.post('/google/verify-token', async (req, res) => {
+  try {
+    const { credential } = req.body;
+    
+    if (!credential) {
+      return res.status(400).json({ success: false, message: 'Credential is required' });
+    }
+
+    // Decode JWT token from Google
+    const tokenParts = credential.split('.');
+    const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+    
+    const googleId = payload.sub;
+    const email = payload.email;
+    const firstName = payload.given_name || 'User';
+    const lastName = payload.family_name || '';
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Invalid Google token' });
+    }
+
+    // Check if user exists
+    let user = await User.findOne({ email: email.toLowerCase() });
+
+    if (user) {
+      if (!user.googleId) {
+        user.googleId = googleId;
+        await user.save();
+      }
+    } else {
+      // Create new user
+      user = new User({
+        googleId,
+        firstName,
+        lastName,
+        email: email.toLowerCase(),
+        emailVerified: true,
+        phoneVerified: true,
+        phone: '',
+        password: Math.random().toString(36).substring(2),
+      });
+
+      await user.save();
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Generate JWT token
+    const jwtToken = generateToken(user._id, user.role);
+
+    res.json({
+      success: true,
+      token: jwtToken,
+      user: user.toSafeObject(),
+      message: `Welcome${user.firstName ? ', ' + user.firstName : ''}!`,
+    });
+  } catch (error) {
+    console.error('Google One Tap error:', error);
+    res.status(500).json({ success: false, message: 'Google authentication failed' });
+  }
+});
+
 // Apple OAuth verification endpoint
 router.post('/apple/verify', async (req, res) => {
   try {

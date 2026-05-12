@@ -4,15 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 const API = import.meta.env.VITE_API_URL || '/api';
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 interface OAuthButtonsProps {
   onSuccess?: () => void;
 }
 
-// Declare AppleID type
 declare global {
   interface Window {
     AppleID: any;
+    google: any;
   }
 }
 
@@ -82,6 +83,44 @@ export const OAuthButtons: React.FC<OAuthButtonsProps> = ({ onSuccess }) => {
     onSuccess: handleGoogleSuccess,
     onError: () => toast.error('Google sign-in cancelled'),
   });
+
+  // Initialize Google One Tap
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.google && GOOGLE_CLIENT_ID) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: async (response: any) => {
+            try {
+              const res = await fetch(`${API}/auth/oauth/google/verify-token`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ credential: response.credential }),
+              });
+              
+              const data = await res.json();
+              
+              if (data.success && data.token) {
+                localStorage.setItem('indera_token', data.token);
+                toast.success(`Welcome, ${data.user.firstName}!`);
+                if (onSuccess) onSuccess();
+                else navigate('/');
+                window.location.reload();
+              }
+            } catch (error) {
+              console.error('Google One Tap error:', error);
+            }
+          },
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+
+        window.google.accounts.id.prompt();
+      } catch (error) {
+        console.error('Google One Tap init error:', error);
+      }
+    }
+  }, []);
 
   // Listen for Apple Sign-In events
   React.useEffect(() => {
