@@ -79,6 +79,7 @@ export const OAuthButtons: React.FC<OAuthButtonsProps> = ({ onSuccess }) => {
           cancel_on_tap_outside: true,
         });
 
+        // Show One Tap prompt automatically
         window.google.accounts.id.prompt();
       } catch (error) {
         console.error('Google One Tap init error:', error);
@@ -86,12 +87,32 @@ export const OAuthButtons: React.FC<OAuthButtonsProps> = ({ onSuccess }) => {
     }
   }, []);
 
+  // Handle Google Sign-In button with account chooser
+  const handleGoogleSignIn = () => {
+    if (typeof window !== 'undefined' && window.google && GOOGLE_CLIENT_ID) {
+      try {
+        window.google.accounts.id.prompt((notification: any) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            // If One Tap is not displayed, use OAuth flow
+            googleLogin();
+          }
+        });
+      } catch (error) {
+        // Fallback to OAuth flow
+        googleLogin();
+      }
+    } else {
+      // Fallback to OAuth flow
+      googleLogin();
+    }
+  };
+
   return (
     <div className="space-y-3 mb-6">
       {/* Google Button */}
       <button
         type="button"
-        onClick={() => googleLogin()}
+        onClick={handleGoogleSignIn}
         className="w-full bg-ivory/5 hover:bg-ivory/10 text-ivory border border-ivory/20 px-4 py-3 flex items-center justify-center gap-3 transition-colors rounded-sm"
       >
         <svg width="18" height="18" viewBox="0 0 18 18">
