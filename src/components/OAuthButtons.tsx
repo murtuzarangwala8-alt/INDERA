@@ -47,7 +47,7 @@ export const OAuthButtons: React.FC<OAuthButtonsProps> = ({ onSuccess }) => {
       <button
         type="button"
         onClick={() => googleLogin()}
-        className="w-full bg-white text-obsidian border border-ivory/20 px-4 py-3 flex items-center justify-center gap-3 hover:bg-ivory/5 transition-colors rounded-sm"
+        className="w-full bg-ivory/5 hover:bg-ivory/10 text-ivory border border-ivory/20 px-4 py-3 flex items-center justify-center gap-3 transition-colors rounded-sm"
       >
         <svg width="18" height="18" viewBox="0 0 18 18">
           <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
