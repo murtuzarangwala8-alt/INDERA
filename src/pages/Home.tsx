@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { ArrowRight, Gem, ShieldCheck, Sparkles, Truck } from 'lucide-react';
 import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
@@ -86,14 +85,7 @@ const LiveCategoryStrip: React.FC<CategoryStripProps> = ({ categories }) => {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {categories.map((category, index) => (
-            <motion.div
-              key={category.name}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.04 }}
-            >
+          {categories.map((category) => (
               <Link
                 to={`/products?category=${encodeURIComponent(category.name)}`}
                 className="group block relative aspect-[4/5] overflow-hidden bg-sand"
@@ -106,7 +98,7 @@ const LiveCategoryStrip: React.FC<CategoryStripProps> = ({ categories }) => {
                   <p className="text-gold-300 text-[9px] tracking-widest uppercase font-sans mt-1">{category.count || 0} pieces</p>
                 </div>
               </Link>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
@@ -146,28 +138,28 @@ const ProductRail: React.FC<ProductRailProps> = ({ eyebrow, title, description, 
 const CollectionSpotlight: React.FC<{ product: any }> = ({ product }) => (
   <section className="bg-ivory px-6 py-24">
     <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-10 items-center">
-      <motion.div initial={{ opacity: 0, x: -24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
+      <div>
         <div className="aspect-[4/5] overflow-hidden bg-sand">
           <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
         </div>
-      </motion.div>
-      <motion.div initial={{ opacity: 0, x: 24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="lg:px-10">
+      </div>
+      <div className="lg:px-10">
         <p className="text-gold-500 text-[10px] tracking-[0.4em] uppercase font-sans mb-4">{product.category}</p>
         <h2 className="font-serif text-obsidian text-5xl lg:text-6xl font-light leading-none mb-6">{product.name}</h2>
-        <p className="text-obsidian/55 font-sans text-base leading-relaxed mb-8">{product.description}</p>
+        <p className="text-obsidian/50 font-sans text-base leading-relaxed mb-8">{product.description}</p>
         <div className="grid grid-cols-2 gap-4 mb-8">
           <Spec label="Material" value={product.material} />
           <Spec label="Origin" value={product.origin} />
         </div>
         <Link to={`/product/${product.id}`} className="btn-gold">Discover Piece</Link>
-      </motion.div>
+      </div>
     </div>
   </section>
 );
 
 const Spec: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="border-t border-obsidian/10 pt-3">
-    <p className="text-[10px] tracking-widest uppercase font-sans text-obsidian/35">{label}</p>
+    <p className="text-[10px] tracking-widest uppercase font-sans text-obsidian/40">{label}</p>
     <p className="font-sans text-sm text-obsidian/70 mt-1">{value}</p>
   </div>
 );
@@ -196,17 +188,17 @@ const EditorialShowcase: React.FC<{ products: any[] }> = ({ products }) => (
 
 const LiveServices = () => (
   <section className="bg-ivory px-6 py-20">
-    <div className="max-w-7xl mx-auto grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-obsidian/10">
+    <div className="max-w-7xl mx-auto grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
       {[
         { icon: Sparkles, title: 'New Drops', text: 'Live catalogue updates from admin' },
         { icon: Gem, title: 'Curated Finish', text: 'Jewelry-first product storytelling' },
         { icon: Truck, title: 'Tracked Orders', text: 'Account order history after checkout' },
         { icon: ShieldCheck, title: 'Verified Accounts', text: 'Email and phone OTP security' },
       ].map((item) => (
-        <div key={item.title} className="bg-ivory p-7">
+        <div key={item.title} className="bg-sand/30 p-7 border border-obsidian/8">
           <item.icon size={22} className="text-gold-500 mb-5" />
           <h3 className="font-serif text-obsidian text-2xl font-light">{item.title}</h3>
-          <p className="font-sans text-sm text-obsidian/45 mt-2">{item.text}</p>
+          <p className="font-sans text-sm text-obsidian/50 mt-2">{item.text}</p>
         </div>
       ))}
     </div>

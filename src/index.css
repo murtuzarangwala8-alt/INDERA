@@ -66,6 +66,11 @@
 
   .btn-gold:hover::after { opacity: 1; }
 
+  .btn-gold:focus-visible {
+    outline: 2px solid #C9A84C;
+    outline-offset: 3px;
+  }
+
   .btn-outline {
     @apply inline-flex items-center justify-center px-8 py-3 font-sans font-medium tracking-widest text-xs uppercase border;
     border-color: rgba(201, 168, 76, 0.6);
@@ -78,13 +83,17 @@
     border-color: #C9A84C;
   }
 
+  .btn-outline:focus-visible {
+    outline: 2px solid #C9A84C;
+    outline-offset: 3px;
+  }
+
   .product-card-3d {
-    transform-style: preserve-3d;
     transition: transform 0.4s ease, box-shadow 0.4s ease;
   }
 
   .product-card-3d:hover {
-    transform: translateY(-8px) rotateX(2deg);
+    transform: translateY(-8px);
     box-shadow: 0 30px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(201,168,76,0.3);
   }
 

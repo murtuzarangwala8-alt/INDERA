@@ -25,13 +25,13 @@ const Hero: React.FC = () => {
 
       {/* Decorative gold orb */}
       <div 
-        className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full opacity-8 blur-3xl pointer-events-none"
-        style={{ background: 'radial-gradient(circle, #C9A84C, transparent)' }} 
+        className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.08), transparent)' }} 
       />
 
       {/* Content */}
       <div className="relative max-w-7xl mx-auto px-6 lg:px-8 w-full z-10">
-        <div className="max-w-2xl py-40">
+        <div className="max-w-2xl py-24 sm:py-40">
 
           <p className="text-gold-400 text-xs tracking-[0.45em] uppercase font-sans mb-6 animate-fade-in">
             New Collection 2024
@@ -48,9 +48,8 @@ const Hero: React.FC = () => {
             Elegance.
           </h1>
 
-          <p 
-            className="text-ivory/60 font-sans font-light text-lg leading-relaxed mb-10 max-w-md animate-fade-in-up"
-            style={{ animationDelay: '0.4s' }}
+          <p className="text-ivory/60 font-sans font-light leading-relaxed mb-10 max-w-md animate-fade-in-up"
+            style={{ fontSize: 'clamp(0.95rem, 2vw, 1.125rem)', animationDelay: '0.4s' }}
           >
             Premium Indo-European jewelry crafted between cultures.
             Where Jaipur's artisan hands meet Milan's refined eye.
@@ -81,7 +80,7 @@ const Hero: React.FC = () => {
             ].map((stat) => (
               <div key={stat.label}>
                 <p className="font-serif text-2xl text-gold-400 font-light">{stat.value}</p>
-                <p className="text-ivory/40 text-xs tracking-widest uppercase font-sans mt-1">{stat.label}</p>
+                <p className="text-ivory/60 text-xs tracking-widest uppercase font-sans mt-1">{stat.label}</p>
               </div>
             ))}
           </div>

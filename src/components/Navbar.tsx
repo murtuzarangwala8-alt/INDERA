@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, memo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingBag, Heart, Search, Menu, X, User, LogOut } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +13,21 @@ const Navbar: React.FC = () => {
   const { cart, wishlist } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const accountRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (accountRef.current && !accountRef.current.contains(e.target as Node)) setAccountOpen(false);
+      if (isOpen) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [isOpen]);
+
+  // Close menu on route change
+  useEffect(() => { setIsOpen(false); setAccountOpen(false); }, [location.pathname]);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   useEffect(() => {
@@ -71,13 +86,13 @@ const Navbar: React.FC = () => {
             <div className="flex items-center space-x-5">
               <button
                 onClick={() => setSearchOpen(true)}
-                className="text-ivory/80 hover:text-gold-400 transition-colors"
+                className="flex items-center justify-center w-11 h-11 text-ivory/80 hover:text-gold-400 transition-colors"
                 aria-label="Search"
               >
                 <Search size={18} />
               </button>
 
-              <Link to="/wishlist" className="relative text-ivory/80 hover:text-gold-400 transition-colors" aria-label="Wishlist">
+              <Link to="/wishlist" className="relative flex items-center justify-center w-11 h-11 text-ivory/80 hover:text-gold-400 transition-colors" aria-label="Wishlist">
                 <Heart size={18} />
                 {wishlist.length > 0 && (
                   <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-gold-400 text-obsidian text-[9px] font-bold flex items-center justify-center">
@@ -87,11 +102,12 @@ const Navbar: React.FC = () => {
               </Link>
 
               {/* Account */}
-              <div className="relative">
+              <div className="relative" ref={accountRef}>
                 <button
                   onClick={() => isAuthenticated ? setAccountOpen(!accountOpen) : navigate('/login')}
-                  className="text-ivory/80 hover:text-gold-400 transition-colors"
+                  className="flex items-center justify-center w-11 h-11 text-ivory/80 hover:text-gold-400 transition-colors"
                   aria-label="Account"
+                  aria-expanded={accountOpen}
                 >
                   <User size={18} />
                 </button>
@@ -102,7 +118,7 @@ const Navbar: React.FC = () => {
                   >
                     <div className="px-4 py-3 border-b border-ivory/5">
                       <p className="text-ivory text-sm font-serif">{user?.firstName} {user?.lastName}</p>
-                      <p className="text-ivory/30 text-[10px] font-sans truncate">{user?.email}</p>
+                      <p className="text-ivory/60 text-[10px] font-sans truncate">{user?.email}</p>
                     </div>
                     <Link to="/account" onClick={() => setAccountOpen(false)}
                       className="flex items-center gap-2 px-4 py-2.5 text-ivory/60 hover:text-gold-400 text-xs font-sans tracking-widest uppercase transition-colors">
@@ -116,7 +132,7 @@ const Navbar: React.FC = () => {
                 )}
               </div>
 
-              <Link to="/cart" className="relative text-ivory/80 hover:text-gold-400 transition-colors" aria-label="Cart">
+              <Link to="/cart" className="relative flex items-center justify-center w-11 h-11 text-ivory/80 hover:text-gold-400 transition-colors" aria-label="Cart">
                 <ShoppingBag size={18} />
                 {cartCount > 0 && (
                   <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-gold-400 text-obsidian text-[9px] font-bold flex items-center justify-center">
@@ -127,8 +143,9 @@ const Navbar: React.FC = () => {
 
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="text-ivory/80 hover:text-gold-400 transition-colors"
-                aria-label="Menu"
+                className="flex items-center justify-center w-11 h-11 -mr-2 text-ivory/80 hover:text-gold-400 transition-colors"
+                aria-label={isOpen ? 'Close menu' : 'Open menu'}
+                aria-expanded={isOpen}
               >
                 {isOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
@@ -137,22 +154,29 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Hamburger Menu */}
-        {isOpen && (
-          <div className="glass-dark border-t border-gold-400/10">
-            <div className="px-6 py-6 space-y-5">
-              {navLinks.map((link) => (
+        <div
+          className="glass-dark border-t border-gold-400/10 overflow-hidden transition-all duration-300 ease-in-out"
+          style={{ maxHeight: isOpen ? '300px' : '0', opacity: isOpen ? 1 : 0 }}
+          aria-hidden={!isOpen}
+        >
+          <div className="px-6 py-6 space-y-1">
+            {navLinks.map((link) => {
+              const isActive = location.pathname === link.href.split('?')[0];
+              return (
                 <Link
                   key={link.label}
                   to={link.href}
-                  onClick={() => setIsOpen(false)}
-                  className="block text-xs tracking-[0.25em] uppercase font-sans text-ivory/80 hover:text-gold-400 transition-colors"
+                  className={`flex items-center justify-between py-3 text-xs tracking-[0.25em] uppercase font-sans transition-colors ${
+                    isActive ? 'text-gold-400' : 'text-ivory/80 hover:text-gold-400'
+                  }`}
                 >
                   {link.label}
+                  {isActive && <span className="w-1 h-1 rounded-full bg-gold-400" />}
                 </Link>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        )}
+        </div>
       </nav>
 
       {/* Search Overlay */}
