@@ -78,21 +78,39 @@ const AdminDashboard: React.FC = () => {
   const loadAdminData = async () => {
     setLoading(true);
     try {
-      const [productsResponse, ordersResponse, usersResponse, categoriesResponse] = await Promise.all([
+      const [productsResult, ordersResult, usersResult, categoriesResult] = await Promise.allSettled([
         adminFetchProducts({ limit: '100' }),
         adminFetchOrders({ limit: '25' }),
         adminFetchUsers({ limit: '50' }),
         fetchCategories(),
       ]);
 
-      if (productsResponse.success) setProducts(productsResponse.products.map(normalizeProduct));
-      else toast.error(productsResponse.message || 'Could not load products');
+      if (productsResult.status === 'fulfilled') {
+        if (productsResult.value.success) setProducts(productsResult.value.products.map(normalizeProduct));
+        else toast.error(`Products: ${productsResult.value.message || 'Could not load'}`);
+      } else {
+        toast.error(`Products API error: ${productsResult.reason?.message || 'Network error'}`);
+      }
 
-      if (ordersResponse.success) setOrders(ordersResponse.orders || []);
-      if (usersResponse.success) setUsers(usersResponse.users || []);
-      if (categoriesResponse.success) setCategories(categoriesResponse.categories || []);
-    } catch {
-      toast.error('Could not connect to admin API');
+      if (ordersResult.status === 'fulfilled') {
+        if (ordersResult.value.success) setOrders(ordersResult.value.orders || []);
+        else toast.error(`Orders: ${ordersResult.value.message || 'Could not load'}`);
+      } else {
+        toast.error(`Orders API error: ${ordersResult.reason?.message || 'Network error'}`);
+      }
+
+      if (usersResult.status === 'fulfilled') {
+        if (usersResult.value.success) setUsers(usersResult.value.users || []);
+        else toast.error(`Users: ${usersResult.value.message || 'Could not load'}`);
+      } else {
+        toast.error(`Users API error: ${usersResult.reason?.message || 'Network error'}`);
+      }
+
+      if (categoriesResult.status === 'fulfilled') {
+        if (categoriesResult.value.success) setCategories(categoriesResult.value.categories || []);
+      }
+    } catch (error: any) {
+      toast.error(`Admin API error: ${error?.message || 'Could not connect'}`);
     } finally {
       setLoading(false);
     }
