@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -9,12 +11,31 @@ const Contact: React.FC = () => {
     subject: '',
     message: '',
   });
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Message sent successfully! We\'ll get back to you soon.');
-    setFormData({ name: '', email: '', subject: '', message: '' });
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${API_URL}/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Message sent! We\'ll get back to you within 24 hours.');
+        setFormData({ name: '', email: '', subject: '', message: '' });
+      } else {
+        toast.error(data.message || 'Failed to send message. Please try again.');
+      }
+    } catch {
+      toast.error('Network error. Please check your connection and try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
+
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -116,10 +137,14 @@ const Contact: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 bg-gold-500 text-black py-4 rounded-lg hover:bg-gold-600 transition font-semibold"
+              disabled={submitting}
+              className="w-full flex items-center justify-center gap-2 bg-gold-500 text-black py-4 rounded-lg hover:bg-gold-600 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Send size={20} />
-              Send Message
+              {submitting ? (
+                <><Loader size={18} className="animate-spin" /> Sending...</>
+              ) : (
+                <><Send size={20} /> Send Message</>
+              )}
             </button>
           </form>
         </div>

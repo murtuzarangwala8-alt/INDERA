@@ -6,6 +6,8 @@ import authRoutes from './routes/authRoutes.js';
 import oauthRoutes from './routes/oauthRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import productRoutes from './routes/productRoutes.js';
+import contactRoutes from './routes/contactRoutes.js';
+import returnRoutes from './routes/returnRoutes.js';
 import { stripeEnabled } from './config/stripe.js';
 
 dotenv.config();
@@ -82,6 +84,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/auth/oauth', oauthRoutes);
 app.use('/api', productRoutes);
 app.use('/api', orderRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/returns', returnRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack || err);

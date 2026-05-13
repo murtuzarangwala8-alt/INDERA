@@ -233,5 +233,135 @@ export const sendOrderConfirmation = async (order) => {
   }
 };
 
+// ── Contact form notification ─────────────────────────────────
+
+export const sendContactNotification = async ({ name, email, subject, message }) => {
+  const adminEmail = process.env.ADMIN_NOTIFY_EMAIL || process.env.EMAIL_FROM;
+
+  // 1. Alert admin
+  await getTransporter().sendMail({
+    from: process.env.EMAIL_FROM,
+    to: adminEmail,
+    subject: `[CONTACT] ${subject}`,
+    html: `
+      <!DOCTYPE html><html><body style="font-family:'DM Sans',Arial,sans-serif;background:#FAF7F2;margin:0;padding:0">
+      <div style="max-width:520px;margin:40px auto;background:#fff;border:1px solid rgba(201,168,76,0.2)">
+        <div style="background:#0D0D0D;padding:28px;text-align:center">
+          <h1 style="margin:0;font-family:Georgia,serif;color:#C9A84C;font-weight:300;letter-spacing:0.2em">INDÉRA</h1>
+          <p style="margin:8px 0 0;color:rgba(250,247,242,0.5);font-size:11px;letter-spacing:0.3em;text-transform:uppercase">New Contact Message</p>
+        </div>
+        <div style="padding:36px">
+          <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+            <tr><td style="padding:8px 0;font-size:12px;color:rgba(13,13,13,0.45);text-transform:uppercase;letter-spacing:0.1em;width:90px">From</td><td style="padding:8px 0;font-size:14px;color:#0D0D0D">${name}</td></tr>
+            <tr><td style="padding:8px 0;font-size:12px;color:rgba(13,13,13,0.45);text-transform:uppercase;letter-spacing:0.1em">Email</td><td style="padding:8px 0;font-size:14px;color:#0D0D0D"><a href="mailto:${email}" style="color:#C9A84C">${email}</a></td></tr>
+            <tr><td style="padding:8px 0;font-size:12px;color:rgba(13,13,13,0.45);text-transform:uppercase;letter-spacing:0.1em">Subject</td><td style="padding:8px 0;font-size:14px;color:#0D0D0D">${subject}</td></tr>
+          </table>
+          <div style="background:#FAF7F2;border-left:3px solid #C9A84C;padding:16px 20px">
+            <p style="margin:0;font-size:14px;color:#0D0D0D;line-height:1.7">${message.replace(/\n/g, '<br>')}</p>
+          </div>
+        </div>
+        <div style="border-top:1px solid rgba(201,168,76,0.1);padding:16px;text-align:center">
+          <p style="color:rgba(13,13,13,0.3);font-size:11px;margin:0">&copy; 2024 INDÉRA. Admin Notification.</p>
+        </div>
+      </div>
+      </body></html>
+    `,
+  });
+
+  // 2. Auto-reply to sender
+  await getTransporter().sendMail({
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: 'We received your message — INDÉRA',
+    html: `
+      <!DOCTYPE html><html><body style="font-family:'DM Sans',Arial,sans-serif;background:#FAF7F2;margin:0;padding:0">
+      <div style="max-width:520px;margin:40px auto;background:#fff;border:1px solid rgba(201,168,76,0.2)">
+        <div style="background:#0D0D0D;padding:28px;text-align:center">
+          <h1 style="margin:0;font-family:Georgia,serif;color:#C9A84C;font-weight:300;letter-spacing:0.2em">INDÉRA</h1>
+        </div>
+        <div style="padding:36px">
+          <p style="color:#0D0D0D;font-size:15px">Hello ${name},</p>
+          <p style="color:rgba(13,13,13,0.6);font-size:14px;line-height:1.7">Thank you for reaching out. We have received your message regarding <strong>"${subject}"</strong> and will respond within 24 hours.</p>
+          <p style="color:rgba(13,13,13,0.6);font-size:14px;line-height:1.7">If your enquiry is urgent, please email us directly at <a href="mailto:hello@indera.it" style="color:#C9A84C">hello@indera.it</a>.</p>
+          <p style="color:rgba(13,13,13,0.4);font-size:13px;margin-top:24px">Warm regards,<br><strong style="color:#0D0D0D">The INDÉRA Team</strong></p>
+        </div>
+        <div style="border-top:1px solid rgba(201,168,76,0.1);padding:16px;text-align:center">
+          <p style="color:rgba(13,13,13,0.3);font-size:11px;margin:0">&copy; 2024 INDÉRA. All rights reserved.</p>
+        </div>
+      </div>
+      </body></html>
+    `,
+  });
+};
+
+// ── Return request emails ──────────────────────────────────────
+
+export const sendReturnRequestEmail = async ({ firstName, email, orderNumber, reason, resolution, returnId }) => {
+  const adminEmail = process.env.ADMIN_NOTIFY_EMAIL || process.env.EMAIL_FROM;
+  const reasonLabels = {
+    damaged: 'Damaged on arrival',
+    wrong_item: 'Wrong item received',
+    not_as_described: 'Not as described',
+    changed_mind: 'Changed my mind',
+    other: 'Other',
+  };
+
+  // 1. Alert admin
+  await getTransporter().sendMail({
+    from: process.env.EMAIL_FROM,
+    to: adminEmail,
+    subject: `[RETURN REQUEST] Order ${orderNumber} — ${reasonLabels[reason] || reason}`,
+    html: `
+      <!DOCTYPE html><html><body style="font-family:'DM Sans',Arial,sans-serif;background:#FAF7F2;margin:0;padding:0">
+      <div style="max-width:520px;margin:40px auto;background:#fff;border:1px solid rgba(201,168,76,0.2)">
+        <div style="background:#0D0D0D;padding:28px;text-align:center">
+          <h1 style="margin:0;font-family:Georgia,serif;color:#C9A84C;font-weight:300;letter-spacing:0.2em">INDÉRA</h1>
+          <p style="margin:8px 0 0;color:rgba(250,247,242,0.5);font-size:11px;letter-spacing:0.3em;text-transform:uppercase">New Return Request</p>
+        </div>
+        <div style="padding:36px">
+          <table style="width:100%;border-collapse:collapse">
+            <tr><td style="padding:8px 0;font-size:12px;color:rgba(13,13,13,0.45);text-transform:uppercase;letter-spacing:0.1em;width:120px">Return ID</td><td style="padding:8px 0;font-size:13px;color:#C9A84C;font-family:monospace">${returnId}</td></tr>
+            <tr><td style="padding:8px 0;font-size:12px;color:rgba(13,13,13,0.45);text-transform:uppercase;letter-spacing:0.1em">Customer</td><td style="padding:8px 0;font-size:14px;color:#0D0D0D">${firstName} — <a href="mailto:${email}" style="color:#C9A84C">${email}</a></td></tr>
+            <tr><td style="padding:8px 0;font-size:12px;color:rgba(13,13,13,0.45);text-transform:uppercase;letter-spacing:0.1em">Order</td><td style="padding:8px 0;font-size:14px;color:#0D0D0D">${orderNumber}</td></tr>
+            <tr><td style="padding:8px 0;font-size:12px;color:rgba(13,13,13,0.45);text-transform:uppercase;letter-spacing:0.1em">Reason</td><td style="padding:8px 0;font-size:14px;color:#0D0D0D">${reasonLabels[reason] || reason}</td></tr>
+            <tr><td style="padding:8px 0;font-size:12px;color:rgba(13,13,13,0.45);text-transform:uppercase;letter-spacing:0.1em">Wants</td><td style="padding:8px 0;font-size:14px;color:#0D0D0D">${resolution === 'refund' ? '💰 Full Refund' : '🔄 Replacement'}</td></tr>
+          </table>
+        </div>
+      </div>
+      </body></html>
+    `,
+  });
+
+  // 2. Confirmation to customer
+  await getTransporter().sendMail({
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: `Return Request Received — Order ${orderNumber}`,
+    html: `
+      <!DOCTYPE html><html><body style="font-family:'DM Sans',Arial,sans-serif;background:#FAF7F2;margin:0;padding:0">
+      <div style="max-width:520px;margin:40px auto;background:#fff;border:1px solid rgba(201,168,76,0.2)">
+        <div style="background:#0D0D0D;padding:28px;text-align:center">
+          <h1 style="margin:0;font-family:Georgia,serif;color:#C9A84C;font-weight:300;letter-spacing:0.2em">INDÉRA</h1>
+        </div>
+        <div style="padding:36px">
+          <p style="color:#0D0D0D;font-size:15px">Hello ${firstName},</p>
+          <p style="color:rgba(13,13,13,0.6);font-size:14px;line-height:1.7">We have received your return request for order <strong>${orderNumber}</strong>. Our team will review it within 2–3 business days.</p>
+          <div style="background:#FAF7F2;border:1px solid rgba(201,168,76,0.2);padding:20px;margin:24px 0">
+            <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:0.15em;color:rgba(13,13,13,0.4)">Return Reference</p>
+            <p style="margin:0;font-family:monospace;font-size:16px;color:#C9A84C">${returnId}</p>
+          </div>
+          <p style="color:rgba(13,13,13,0.6);font-size:14px;line-height:1.7">Requested resolution: <strong>${resolution === 'refund' ? 'Full Refund' : 'Replacement'}</strong></p>
+          <p style="color:rgba(13,13,13,0.4);font-size:13px;margin-top:24px">The INDÉRA Team</p>
+        </div>
+        <div style="border-top:1px solid rgba(201,168,76,0.1);padding:16px;text-align:center">
+          <p style="color:rgba(13,13,13,0.3);font-size:11px;margin:0">&copy; 2024 INDÉRA. All rights reserved.</p>
+        </div>
+      </div>
+      </body></html>
+    `,
+  });
+};
+
 export default getTransporter;
+
 
