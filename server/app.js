@@ -20,7 +20,7 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: (origin, cb) => cb(null, !origin || allowedOrigins.includes(origin)),
+  origin: true,
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
-    message: 'ChronoLux API is running',
+    message: 'INDÉRA API is running',
     timestamp: new Date().toISOString(),
     version: '2.0.0',
   });
