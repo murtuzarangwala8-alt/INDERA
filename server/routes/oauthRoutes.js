@@ -1,63 +1,68 @@
 import express from 'express';
+import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User.js';
 import { generateToken } from '../utils/auth.js';
 
 const router = express.Router();
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Google OAuth verification endpoint
+async function findOrCreateGoogleUser({ googleId, email, firstName, lastName }) {
+  let user = await User.findOne({ email: email.toLowerCase() });
+
+  if (user) {
+    if (!user.googleId) {
+      user.googleId = googleId;
+      await user.save();
+    }
+  } else {
+    user = new User({
+      googleId,
+      firstName: firstName || 'User',
+      lastName: lastName || '',
+      email: email.toLowerCase(),
+      emailVerified: true,
+      phoneVerified: true,
+      phone: '',
+      password: Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2),
+    });
+    await user.save();
+  }
+
+  user.lastLogin = new Date();
+  await user.save();
+  return user;
+}
+
+// Google OAuth button flow (access_token → userinfo)
 router.post('/google/verify', async (req, res) => {
   try {
     const { token } = req.body;
-    
-    if (!token) {
-      return res.status(400).json({ success: false, message: 'Token is required' });
+    if (!token) return res.status(400).json({ success: false, message: 'Token is required' });
+
+    const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!response.ok) {
+      return res.status(401).json({ success: false, message: 'Invalid Google token' });
     }
 
-    // Verify Google token
-    const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`);
     const googleUser = await response.json();
-
     if (!googleUser.email) {
-      return res.status(400).json({ success: false, message: 'Failed to get user info from Google' });
+      return res.status(400).json({ success: false, message: 'Could not get email from Google' });
     }
 
-    // Check if user exists
-    let user = await User.findOne({ email: googleUser.email.toLowerCase() });
-
-    if (user) {
-      // Update Google ID if not set
-      if (!user.googleId) {
-        user.googleId = googleUser.sub;
-        await user.save();
-      }
-    } else {
-      // Create new user
-      user = new User({
-        googleId: googleUser.sub,
-        firstName: googleUser.given_name || 'User',
-        lastName: googleUser.family_name || '',
-        email: googleUser.email.toLowerCase(),
-        emailVerified: true,
-        phoneVerified: true, // Skip phone verification for OAuth users
-        phone: '', // Optional
-        password: Math.random().toString(36).substring(2), // Random password (won't be used)
-      });
-
-      await user.save();
-    }
-
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
-
-    // Generate JWT token
-    const jwtToken = generateToken(user._id, user.role);
+    const user = await findOrCreateGoogleUser({
+      googleId: googleUser.sub,
+      email: googleUser.email,
+      firstName: googleUser.given_name,
+      lastName: googleUser.family_name,
+    });
 
     res.json({
       success: true,
-      token: jwtToken,
+      token: generateToken(user._id, user.role),
       user: user.toSafeObject(),
-      message: `Welcome${user.firstName ? ', ' + user.firstName : ''}!`,
     });
   } catch (error) {
     console.error('Google OAuth error:', error);
@@ -65,136 +70,37 @@ router.post('/google/verify', async (req, res) => {
   }
 });
 
-// Google One Tap verification endpoint
+// Google One Tap flow (credential JWT → verify with google-auth-library)
 router.post('/google/verify-token', async (req, res) => {
   try {
     const { credential } = req.body;
-    
-    if (!credential) {
-      return res.status(400).json({ success: false, message: 'Credential is required' });
+    if (!credential) return res.status(400).json({ success: false, message: 'Credential is required' });
+
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload?.email) {
+      return res.status(400).json({ success: false, message: 'Invalid Google credential' });
     }
 
-    // Decode JWT token from Google
-    const tokenParts = credential.split('.');
-    const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
-    
-    const googleId = payload.sub;
-    const email = payload.email;
-    const firstName = payload.given_name || 'User';
-    const lastName = payload.family_name || '';
-
-    if (!email) {
-      return res.status(400).json({ success: false, message: 'Invalid Google token' });
-    }
-
-    // Check if user exists
-    let user = await User.findOne({ email: email.toLowerCase() });
-
-    if (user) {
-      if (!user.googleId) {
-        user.googleId = googleId;
-        await user.save();
-      }
-    } else {
-      // Create new user
-      user = new User({
-        googleId,
-        firstName,
-        lastName,
-        email: email.toLowerCase(),
-        emailVerified: true,
-        phoneVerified: true,
-        phone: '',
-        password: Math.random().toString(36).substring(2),
-      });
-
-      await user.save();
-    }
-
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
-
-    // Generate JWT token
-    const jwtToken = generateToken(user._id, user.role);
+    const user = await findOrCreateGoogleUser({
+      googleId: payload.sub,
+      email: payload.email,
+      firstName: payload.given_name,
+      lastName: payload.family_name,
+    });
 
     res.json({
       success: true,
-      token: jwtToken,
+      token: generateToken(user._id, user.role),
       user: user.toSafeObject(),
-      message: `Welcome${user.firstName ? ', ' + user.firstName : ''}!`,
     });
   } catch (error) {
     console.error('Google One Tap error:', error);
     res.status(500).json({ success: false, message: 'Google authentication failed' });
-  }
-});
-
-// Apple OAuth verification endpoint
-router.post('/apple/verify', async (req, res) => {
-  try {
-    const { identityToken, user: appleUser } = req.body;
-    
-    if (!identityToken) {
-      return res.status(400).json({ success: false, message: 'Identity token is required' });
-    }
-
-    // Decode Apple identity token (JWT)
-    const tokenParts = identityToken.split('.');
-    const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
-    
-    const appleId = payload.sub;
-    const email = payload.email;
-
-    if (!appleId) {
-      return res.status(400).json({ success: false, message: 'Invalid Apple token' });
-    }
-
-    // Check if user exists
-    let user = await User.findOne({ $or: [{ appleId }, { email: email?.toLowerCase() }] });
-
-    if (user) {
-      // Update Apple ID if not set
-      if (!user.appleId) {
-        user.appleId = appleId;
-        await user.save();
-      }
-    } else {
-      // Create new user
-      // Apple provides name only on first sign-in
-      const firstName = appleUser?.name?.firstName || 'User';
-      const lastName = appleUser?.name?.lastName || '';
-      
-      user = new User({
-        appleId,
-        firstName,
-        lastName,
-        email: email?.toLowerCase() || `apple_${appleId}@indera.local`,
-        emailVerified: true,
-        phoneVerified: true,
-        phone: '',
-        password: Math.random().toString(36).substring(2),
-      });
-
-      await user.save();
-    }
-
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
-
-    // Generate JWT token
-    const jwtToken = generateToken(user._id, user.role);
-
-    res.json({
-      success: true,
-      token: jwtToken,
-      user: user.toSafeObject(),
-      message: `Welcome${user.firstName ? ', ' + user.firstName : ''}!`,
-    });
-  } catch (error) {
-    console.error('Apple OAuth error:', error);
-    res.status(500).json({ success: false, message: 'Apple authentication failed' });
   }
 });
 

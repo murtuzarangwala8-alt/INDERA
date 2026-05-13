@@ -12,8 +12,15 @@ dotenv.config();
 
 const app = express();
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'https://indera.it',
+  'https://www.indera.it',
+];
+
 app.use(cors({
-  origin: true,
+  origin: (origin, cb) => cb(null, !origin || allowedOrigins.includes(origin)),
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
