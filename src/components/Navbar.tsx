@@ -65,18 +65,7 @@ const Navbar: React.FC = () => {
               </span>
             </Link>
 
-            {/* Desktop Nav */}
-            <div className="hidden md:flex items-center space-x-10">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.label}
-                  to={link.href}
-                  className="text-xs tracking-[0.2em] uppercase font-sans text-ivory/80 hover:text-gold-400 transition-colors duration-300"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
+
 
             {/* Icons */}
             <div className="flex items-center space-x-5">
@@ -138,7 +127,7 @@ const Navbar: React.FC = () => {
 
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="md:hidden text-ivory/80 hover:text-gold-400 transition-colors"
+                className="text-ivory/80 hover:text-gold-400 transition-colors"
                 aria-label="Menu"
               >
                 {isOpen ? <X size={20} /> : <Menu size={20} />}
@@ -147,9 +136,9 @@ const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Hamburger Menu */}
         {isOpen && (
-          <div className="md:hidden glass-dark border-t border-gold-400/10">
+          <div className="glass-dark border-t border-gold-400/10">
             <div className="px-6 py-6 space-y-5">
               {navLinks.map((link) => (
                 <Link
