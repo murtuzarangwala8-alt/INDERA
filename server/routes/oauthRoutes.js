@@ -18,7 +18,7 @@ async function findOrCreateGoogleUser({ googleId, email, firstName, lastName }) 
     user = new User({
       googleId,
       firstName: firstName || 'User',
-      lastName: lastName || '',
+      lastName: lastName || 'User',
       email: email.toLowerCase(),
       emailVerified: true,
       phoneVerified: true,
@@ -66,7 +66,7 @@ router.post('/google/verify', async (req, res) => {
     });
   } catch (error) {
     console.error('Google OAuth error:', error);
-    res.status(500).json({ success: false, message: 'Google authentication failed' });
+    res.status(500).json({ success: false, message: `Google authentication failed: ${error.message}` });
   }
 });
 
@@ -100,7 +100,7 @@ router.post('/google/verify-token', async (req, res) => {
     });
   } catch (error) {
     console.error('Google One Tap error:', error);
-    res.status(500).json({ success: false, message: 'Google authentication failed' });
+    res.status(500).json({ success: false, message: `Google authentication failed: ${error.message}` });
   }
 });
 

@@ -549,40 +549,124 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         <h2 className="font-serif text-ivory text-3xl font-light mb-4">Orders</h2>
-        <div className="glass-dark rounded-sm overflow-hidden" style={{ border: '1px solid rgba(201,168,76,0.1)' }}>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-ivory/5">
-                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Order</th>
-                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Customer</th>
-                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Total</th>
-                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.map((order) => (
-                  <tr key={order._id} className="border-b border-ivory/5">
-                    <td className="px-5 py-4">
-                      <p className="text-ivory text-sm font-sans">{order.orderNumber}</p>
-                      <p className="text-ivory/30 text-[10px]">{new Date(order.createdAt).toLocaleString()}</p>
-                    </td>
-                    <td className="px-5 py-4 text-ivory/60 text-xs font-sans">
-                      {order.customer?.firstName} {order.customer?.lastName}
-                      <p className="text-ivory/30">{order.customer?.email}</p>
-                    </td>
-                    <td className="px-5 py-4 text-ivory font-serif text-lg">EUR {order.pricing?.total?.toFixed?.(2) || order.pricing?.total}</td>
-                    <td className="px-5 py-4">
-                      <select value={order.status} onChange={(event) => handleOrderStatus(order._id, event.target.value)} className="bg-obsidian border border-ivory/10 text-ivory/70 px-3 py-2 text-xs uppercase font-sans">
-                        {ORDER_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
-                      </select>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {orders.length === 0 && <p className="text-ivory/30 text-center py-10 font-serif text-xl">No orders yet</p>}
+        <div className="space-y-4">
+          {orders.length === 0 && (
+            <div className="glass-dark rounded-sm p-10 text-center" style={{ border: '1px solid rgba(201,168,76,0.1)' }}>
+              <p className="text-ivory/30 font-serif text-xl">No orders yet</p>
+            </div>
+          )}
+          {orders.map((order) => (
+            <div key={order._id} className="glass-dark rounded-sm overflow-hidden" style={{ border: '1px solid rgba(201,168,76,0.1)' }}>
+              {/* Order Header */}
+              <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-ivory/5 bg-ivory/[0.02]">
+                <div className="flex items-center gap-6">
+                  <div>
+                    <p className="text-gold-400 font-sans text-xs tracking-widest uppercase">{order.orderNumber}</p>
+                    <p className="text-ivory/30 text-[10px] font-sans mt-0.5">{new Date(order.createdAt).toLocaleString()}</p>
+                  </div>
+                  <span className={`text-[9px] tracking-widest uppercase font-sans px-3 py-1.5 border ${
+                    order.status === 'delivered' ? 'border-green-400/30 text-green-400' :
+                    order.status === 'cancelled' ? 'border-terracotta/30 text-terracotta' :
+                    order.status === 'shipped' ? 'border-blue-400/30 text-blue-400' :
+                    'border-gold-400/30 text-gold-400'
+                  }`}>{order.status}</span>
+                </div>
+                <select
+                  value={order.status}
+                  onChange={(event) => handleOrderStatus(order._id, event.target.value)}
+                  className="bg-obsidian border border-ivory/10 text-ivory/70 px-3 py-2 text-xs uppercase font-sans"
+                >
+                  {ORDER_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
+                </select>
+              </div>
+
+              <div className="grid lg:grid-cols-3 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-ivory/5">
+                {/* Customer Details */}
+                <div className="px-6 py-5">
+                  <p className="text-[10px] tracking-widest uppercase font-sans text-ivory/30 mb-3">Customer</p>
+                  <p className="text-ivory font-sans text-sm font-medium">{order.customer?.firstName} {order.customer?.lastName}</p>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-ivory/50 text-xs font-sans flex items-center gap-2">
+                      <span className="text-gold-500/60">✉</span> {order.customer?.email || '—'}
+                    </p>
+                    <p className="text-ivory/50 text-xs font-sans flex items-center gap-2">
+                      <span className="text-gold-500/60">✆</span> {order.customer?.phone || '—'}
+                    </p>
+                  </div>
+                  {order.shippingAddress && (
+                    <div className="mt-4">
+                      <p className="text-[10px] tracking-widest uppercase font-sans text-ivory/30 mb-2">Shipping Address</p>
+                      <p className="text-ivory/60 text-xs font-sans leading-relaxed">
+                        {order.shippingAddress.address}<br />
+                        {order.shippingAddress.city}, {order.shippingAddress.zipCode}<br />
+                        {order.shippingAddress.country}
+                      </p>
+                    </div>
+                  )}
+                  {order.payment && (
+                    <div className="mt-4">
+                      <p className="text-[10px] tracking-widest uppercase font-sans text-ivory/30 mb-1">Payment</p>
+                      <span className={`text-[9px] tracking-widest uppercase font-sans px-2 py-1 border ${
+                        order.payment.status === 'completed' ? 'border-green-400/30 text-green-400' : 'border-gold-400/30 text-gold-400'
+                      }`}>{order.payment.status} · {order.payment.method}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Items */}
+                <div className="px-6 py-5">
+                  <p className="text-[10px] tracking-widest uppercase font-sans text-ivory/30 mb-3">Items ({order.items?.length || 0})</p>
+                  <div className="space-y-3">
+                    {(order.items || []).map((item: any, idx: number) => (
+                      <div key={idx} className="flex items-center gap-3">
+                        {item.image && <img src={item.image} alt={item.name} className="w-10 h-10 object-cover rounded-sm flex-shrink-0 opacity-80" />}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-ivory text-xs font-sans truncate">{item.name}</p>
+                          <p className="text-ivory/30 text-[10px] font-sans">Qty: {item.quantity}</p>
+                        </div>
+                        <p className="text-gold-400 font-sans text-xs flex-shrink-0">EUR {(item.price * item.quantity).toFixed(2)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pricing */}
+                <div className="px-6 py-5">
+                  <p className="text-[10px] tracking-widest uppercase font-sans text-ivory/30 mb-3">Pricing</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs font-sans">
+                      <span className="text-ivory/40">Subtotal</span>
+                      <span className="text-ivory/70">EUR {order.pricing?.subtotal?.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-xs font-sans">
+                      <span className="text-ivory/40">Shipping</span>
+                      <span className="text-ivory/70">EUR {order.pricing?.shipping?.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-xs font-sans">
+                      <span className="text-ivory/40">Tax</span>
+                      <span className="text-ivory/70">EUR {order.pricing?.tax?.toFixed(2)}</span>
+                    </div>
+                    <div className="border-t border-ivory/10 pt-2 mt-2 flex justify-between">
+                      <span className="text-ivory/60 text-xs font-sans uppercase tracking-wider">Total</span>
+                      <span className="text-gold-400 font-serif text-lg font-light">EUR {order.pricing?.total?.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  {order.trackingNumber && (
+                    <div className="mt-4">
+                      <p className="text-[10px] tracking-widest uppercase font-sans text-ivory/30 mb-1">Tracking</p>
+                      <p className="text-ivory/60 text-xs font-sans font-mono">{order.trackingNumber}</p>
+                    </div>
+                  )}
+                  {order.notes && (
+                    <div className="mt-4">
+                      <p className="text-[10px] tracking-widest uppercase font-sans text-ivory/30 mb-1">Notes</p>
+                      <p className="text-ivory/50 text-xs font-sans italic">{order.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
