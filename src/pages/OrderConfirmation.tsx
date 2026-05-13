@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { CheckCircle, Package, ArrowRight, Home, ShoppingBag } from 'lucide-react';
 
@@ -22,7 +22,6 @@ const OrderConfirmation: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as OrderConfirmationState | null;
-  const hasAnimated = useRef(false);
 
   useEffect(() => {
     // If no state passed, redirect to home
