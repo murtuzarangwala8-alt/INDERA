@@ -87,6 +87,7 @@ const LiveCategoryStrip: React.FC<CategoryStripProps> = ({ categories }) => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {categories.map((category) => (
               <Link
+                key={category.name}
                 to={`/products?category=${encodeURIComponent(category.name)}`}
                 className="group block relative aspect-[4/5] overflow-hidden bg-sand"
                 style={{ border: '1px solid rgba(201,168,76,0.18)' }}
@@ -98,7 +99,6 @@ const LiveCategoryStrip: React.FC<CategoryStripProps> = ({ categories }) => {
                   <p className="text-gold-300 text-[9px] tracking-widest uppercase font-sans mt-1">{category.count || 0} pieces</p>
                 </div>
               </Link>
-            </div>
           ))}
         </div>
       </div>
