@@ -1,4 +1,7 @@
 import mongoose from 'mongoose';
+import { customAlphabet } from 'nanoid';
+
+const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 8);
 
 const orderSchema = new mongoose.Schema({
   user: {
@@ -56,11 +59,10 @@ const orderSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Generate order number before required-field validation runs.
-orderSchema.pre('validate', async function(next) {
+// Generate unique order number before validation
+orderSchema.pre('validate', function(next) {
   if (!this.orderNumber) {
-    const count = await mongoose.model('Order').countDocuments();
-    this.orderNumber = `CL${Date.now()}-${String(count + 1).padStart(5, '0')}`;
+    this.orderNumber = `IN-${nanoid()}`;
   }
   next();
 });
