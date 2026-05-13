@@ -50,7 +50,7 @@ const Navbar: React.FC = () => {
     <>
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled ? 'bg-obsidian/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
+          scrolled ? 'bg-obsidian/95 backdrop-blur-md shadow-lg' : 'bg-obsidian/30 backdrop-blur-sm'
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
