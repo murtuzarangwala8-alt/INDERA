@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, Loader } from 'lucide-react';
+import { Loader } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { loadStripe } from '@stripe/stripe-js';
@@ -93,8 +93,6 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?
   const navigate = useNavigate();
   const { clearCart } = useCart();
   const [processing, setProcessing] = useState(false);
-  const [orderComplete, setOrderComplete] = useState(false);
-  const [orderNumber, setOrderNumber] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,14 +159,23 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?
         );
 
         if (confirmResponse.success) {
-          setOrderNumber(confirmResponse.order.orderNumber);
-          setOrderComplete(true);
           clearCart();
           toast.success('Order placed successfully!');
-          
-          setTimeout(() => {
-            navigate('/');
-          }, 3000);
+          navigate('/order-confirmation', {
+            state: {
+              orderNumber: confirmResponse.order.orderNumber,
+              total,
+              email: formData.email,
+              firstName: formData.firstName,
+              items: cart.map(item => ({
+                name: item.name,
+                brand: item.brand,
+                price: item.price,
+                quantity: item.quantity,
+                image: item.image,
+              })),
+            },
+          });
         }
       }
     } catch (error: any) {
@@ -178,23 +185,6 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?
       setProcessing(false);
     }
   };
-
-  if (orderComplete) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <CheckCircle size={80} className="mx-auto mb-6 text-green-500" />
-        <h1 className="text-4xl font-bold mb-4">Order Confirmed!</h1>
-        <p className="text-xl text-gray-600 dark:text-gray-400 mb-4">
-          Thank you for your purchase!
-        </p>
-        <p className="text-lg mb-8">
-          Order Number: <span className="font-bold text-gold-500">{orderNumber}</span>
-        </p>
-        <p className="text-gray-500">A confirmation email has been sent to {formData.email}</p>
-        <p className="text-gray-500 mt-2">Redirecting to home page...</p>
-      </div>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -245,8 +235,6 @@ const DemoCheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; to
   const navigate = useNavigate();
   const { clearCart } = useCart();
   const [processing, setProcessing] = useState(false);
-  const [orderComplete, setOrderComplete] = useState(false);
-  const [orderNumber, setOrderNumber] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -272,14 +260,23 @@ const DemoCheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; to
         throw new Error(confirmResponse.error || confirmResponse.message);
       }
 
-      setOrderNumber(confirmResponse.order.orderNumber);
-      setOrderComplete(true);
       clearCart();
       toast.success('Order placed successfully!');
-
-      setTimeout(() => {
-        navigate('/');
-      }, 3000);
+      navigate('/order-confirmation', {
+        state: {
+          orderNumber: confirmResponse.order.orderNumber,
+          total,
+          email: formData.email,
+          firstName: formData.firstName,
+          items: cart.map(item => ({
+            name: item.name,
+            brand: item.brand,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image,
+          })),
+        },
+      });
     } catch (error: any) {
       console.error('Checkout error:', error);
       toast.error(error.message || 'Order failed. Please try again.');
@@ -287,23 +284,6 @@ const DemoCheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; to
       setProcessing(false);
     }
   };
-
-  if (orderComplete) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <CheckCircle size={80} className="mx-auto mb-6 text-green-500" />
-        <h1 className="text-4xl font-bold mb-4">Order Confirmed!</h1>
-        <p className="text-xl text-gray-600 dark:text-gray-400 mb-4">
-          Thank you for your purchase!
-        </p>
-        <p className="text-lg mb-8">
-          Order Number: <span className="font-bold text-gold-500">{orderNumber}</span>
-        </p>
-        <p className="text-gray-500">Your order is saved in your account and admin dashboard.</p>
-        <p className="text-gray-500 mt-2">Redirecting to home page...</p>
-      </div>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">

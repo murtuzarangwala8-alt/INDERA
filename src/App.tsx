@@ -18,6 +18,7 @@ import { ForgotPassword, ResetPassword } from './pages/ForgotPassword';
 import Account from './pages/Account';
 import AdminDashboard from './pages/AdminDashboard';
 import Returns from './pages/Returns';
+import OrderConfirmation from './pages/OrderConfirmation';
 
 // Auth pages use full-screen dark layout — no Navbar/Footer
 const AuthLayout = ({ children }: { children: React.ReactNode }) => <>{children}</>;
@@ -51,6 +52,7 @@ function App() {
                     <Route path="/returns" element={<Returns />} />
                     <Route path="/account" element={<Account />} />
                     <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/order-confirmation" element={<OrderConfirmation />} />
                   </Routes>
                 </main>
                 <Footer />
