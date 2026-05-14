@@ -34,6 +34,16 @@ const ProductDetail: React.FC = () => {
   }, [product?.id]);
   const { addToCart, toggleWishlist, wishlist } = useCart();
   const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState<string>('');
+
+  // Build the full images array — fall back to single image if no array
+  const allImages = (product?.images?.length ? product.images : product?.image ? [product.image] : []);
+
+  // Reset selected image when product changes
+  useEffect(() => {
+    if (allImages.length > 0) setSelectedImage(allImages[0]);
+  }, [product?.id]);
+
 
   if (!product) {
     return (
@@ -68,22 +78,49 @@ const ProductDetail: React.FC = () => {
         </button>
 
         <div className="grid lg:grid-cols-2 gap-16">
-          {/* Image */}
+          {/* Image Gallery */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7 }}
+            className="flex flex-col gap-4"
           >
+            {/* Main image */}
             <div
               className="aspect-[4/5] overflow-hidden rounded-sm"
               style={{ boxShadow: '20px 20px 60px rgba(0,0,0,0.1)' }}
             >
-              <img
-                src={product.image}
+              <motion.img
+                key={selectedImage}
+                src={selectedImage || product.image}
                 alt={`${product.name} — ${product.category} by INDÉRA`}
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.35 }}
               />
             </div>
+
+            {/* Thumbnail strip — only shown when there are multiple images */}
+            {allImages.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto pb-1">
+                {allImages.map((img, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setSelectedImage(img)}
+                    className={`flex-shrink-0 w-20 h-20 rounded-sm overflow-hidden transition-all duration-200 ${
+                      (selectedImage || allImages[0]) === img
+                        ? 'ring-2 ring-gold-400 ring-offset-2 ring-offset-ivory opacity-100'
+                        : 'opacity-50 hover:opacity-80'
+                    }`}
+                    aria-label={`View image ${i + 1}`}
+                  >
+                    <img src={img} alt={`${product.name} view ${i + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </motion.div>
 
           {/* Details */}
