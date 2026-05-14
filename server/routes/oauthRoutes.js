@@ -36,6 +36,11 @@ async function findOrCreateGoogleUser({ googleId, email, firstName, lastName }) 
 // Google OAuth button flow (access_token → userinfo)
 router.post('/google/verify', async (req, res) => {
   try {
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      console.error('[Google OAuth] GOOGLE_CLIENT_ID is not set in environment');
+      return res.status(500).json({ success: false, message: 'Google OAuth is not configured on this server.' });
+    }
+
     const { token } = req.body;
     if (!token) return res.status(400).json({ success: false, message: 'Token is required' });
 
@@ -44,7 +49,9 @@ router.post('/google/verify', async (req, res) => {
     });
 
     if (!response.ok) {
-      return res.status(401).json({ success: false, message: 'Invalid Google token' });
+      const errText = await response.text();
+      console.error('[Google OAuth] Userinfo error:', response.status, errText);
+      return res.status(401).json({ success: false, message: 'Invalid Google token. Please try signing in again.' });
     }
 
     const googleUser = await response.json();
@@ -65,7 +72,7 @@ router.post('/google/verify', async (req, res) => {
       user: user.toSafeObject(),
     });
   } catch (error) {
-    console.error('Google OAuth error:', error);
+    console.error('[Google OAuth] Unhandled error:', error.message, error.stack);
     res.status(500).json({ success: false, message: `Google authentication failed: ${error.message}` });
   }
 });

@@ -25,6 +25,14 @@ const allowedOrigins = [
   'http://localhost:4173',
   'https://indera.it',
   'https://www.indera.it',
+  // Common deployment platforms — add your specific URL here too
+  /\.vercel\.app$/,
+  /\.netlify\.app$/,
+  /\.onrender\.com$/,
+  /\.railway\.app$/,
+  /\.up\.railway\.app$/,
+  // Allow the env-configured frontend URL
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
 ];
 
 // ── Security headers (helmet) ──────────────────────────────────
@@ -35,7 +43,7 @@ app.use(
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", 'https://js.stripe.com'],
         frameSrc: ["'self'", 'https://js.stripe.com'],
-        connectSrc: ["'self'", 'https://api.stripe.com'],
+        connectSrc: ["'self'", 'https://api.stripe.com', 'https://accounts.google.com', 'https://www.googleapis.com', 'https://oauth2.googleapis.com'],
         imgSrc: ["'self'", 'data:', 'https://images.unsplash.com', 'https://*.unsplash.com'],
         styleSrc: ["'self'", "'unsafe-inline'"],
         fontSrc: ["'self'", 'data:'],
@@ -58,10 +66,15 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // Allow server-to-server requests (no origin) and whitelisted origins
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin) return callback(null, true);
+      const allowed = allowedOrigins.some((o) =>
+        typeof o === 'string' ? o === origin : o.test(origin)
+      );
+      if (allowed) {
         callback(null, true);
       } else {
-        callback(new Error(`CORS: origin '${origin}' not allowed`));
+        console.warn(`[CORS] Blocked origin: ${origin}`);
+        callback(null, false); // don't throw — return 200 with CORS headers missing instead
       }
     },
     credentials: true,
