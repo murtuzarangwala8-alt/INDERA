@@ -411,26 +411,38 @@ const AdminDashboard: React.FC = () => {
 
         <section className="glass-dark rounded-sm p-5 mb-8" style={{ border: '1px solid rgba(201,168,76,0.1)' }}>
           <h2 className="font-serif text-ivory text-2xl font-light mb-4">Categories</h2>
-          <form onSubmit={handleAddCategory} className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto] gap-3 mb-4">
-            <input
-              value={newCategory}
-              onChange={(event) => setNewCategory(event.target.value)}
-              placeholder="New category name"
-              className="bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/40"
-            />
-            <input
-              value={newCategoryImage}
-              onChange={(event) => setNewCategoryImage(event.target.value)}
-              placeholder="Category image URL optional"
-              className="bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/40"
-            />
-            <button type="submit" className="btn-gold px-5">Add Category</button>
+          <form onSubmit={handleAddCategory} className="space-y-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end">
+              <input
+                value={newCategory}
+                onChange={(event) => setNewCategory(event.target.value)}
+                placeholder="New category name"
+                required
+                className="bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/40"
+              />
+              <button type="submit" className="btn-gold px-6 py-3 whitespace-nowrap">Add Category</button>
+            </div>
+            <div>
+              <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-3">Category Photo</label>
+              <ImageUploader
+                images={newCategoryImage ? [newCategoryImage] : []}
+                onChange={(imgs) => setNewCategoryImage(imgs[0] || '')}
+                maxImages={1}
+              />
+            </div>
           </form>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {categories.map((category) => (
               <span key={category.name} className="inline-flex items-center gap-2 border border-ivory/10 px-3 py-2 text-xs text-ivory/60">
+                {(category as any).image && (
+                  <img
+                    src={(category as any).image}
+                    alt={category.name}
+                    className="w-7 h-7 rounded-sm object-cover flex-shrink-0 opacity-80"
+                  />
+                )}
                 {category.name}
-                <button onClick={() => handleDeleteCategory(category)} className="text-terracotta hover:text-ivory" aria-label={`Delete ${category.name}`}>
+                <button onClick={() => handleDeleteCategory(category)} className="text-terracotta hover:text-ivory ml-1" aria-label={`Delete ${category.name}`}>
                   <X size={13} />
                 </button>
               </span>
