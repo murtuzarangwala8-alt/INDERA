@@ -1,4 +1,5 @@
 import express from 'express';
+import crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User.js';
 import { generateToken } from '../utils/auth.js';
@@ -10,12 +11,20 @@ async function findOrCreateGoogleUser({ googleId, email, firstName, lastName }) 
   let user = await User.findOne({ email: email.toLowerCase() });
 
   if (user) {
-    if (!user.googleId) {
-      user.googleId = googleId;
-      await user.save();
-    }
+    // Link Google ID if not already linked, and update lastLogin atomically
+    await User.updateOne(
+      { _id: user._id },
+      {
+        ...(user.googleId ? {} : { googleId }),
+        lastLogin: new Date(),
+      }
+    );
+    // Re-fetch to get the updated doc
+    user = await User.findById(user._id);
   } else {
-    user = new User({
+    // New Google user — generate a strong random password (always ≥24 chars)
+    const randomPassword = crypto.randomBytes(16).toString('hex');
+    user = await User.create({
       googleId,
       firstName: firstName || 'User',
       lastName: lastName || 'User',
@@ -23,13 +32,11 @@ async function findOrCreateGoogleUser({ googleId, email, firstName, lastName }) 
       emailVerified: true,
       phoneVerified: true,
       phone: '',
-      password: Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2),
+      password: randomPassword,
+      lastLogin: new Date(),
     });
-    await user.save();
   }
 
-  user.lastLogin = new Date();
-  await user.save();
   return user;
 }
 

@@ -1,16 +1,15 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
+const getSecret = () => process.env.JWT_SECRET || 'fallback-dev-secret-set-in-vercel-dashboard';
+const getExpiry = () => process.env.JWT_EXPIRES_IN || '30d';
+
 export const generateToken = (userId, role = 'customer') => {
-  return jwt.sign(
-    { id: userId, role },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '30d' }
-  );
+  return jwt.sign({ id: userId, role }, getSecret(), { expiresIn: getExpiry() });
 };
 
 export const verifyToken = (token) => {
-  return jwt.verify(token, process.env.JWT_SECRET);
+  return jwt.verify(token, getSecret());
 };
 
 // 6-digit numeric OTP
