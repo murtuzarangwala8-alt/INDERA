@@ -36,10 +36,12 @@ export const OAuthButtons: React.FC<OAuthButtonsProps> = ({ onSuccess }) => {
         else navigate('/');
         window.location.reload();
       } else {
-        toast.error(data.message || 'Google sign-in failed');
+        console.error('[Google OAuth] Server error:', data);
+        toast.error(data.message || 'Google sign-in failed. Please try again.');
       }
-    } catch (error) {
-      toast.error('Google sign-in failed. Please try again.');
+    } catch (error: any) {
+      console.error('[Google OAuth] Network error:', error);
+      toast.error(`Sign-in error: ${error?.message || 'Could not reach server'}`);
     }
   };
 
