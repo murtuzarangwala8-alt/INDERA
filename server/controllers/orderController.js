@@ -417,3 +417,29 @@ export const getOrderStats = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch statistics.' });
   }
 };
+
+// ── GET /api/orders/my (authenticated customer) ─────────────────
+export const getMyOrders = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+    let userId;
+    try {
+      const decoded = verifyToken(authHeader.split(' ')[1]);
+      userId = decoded.id;
+    } catch {
+      return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+    }
+
+    const orders = await Order.find({ user: userId, 'payment.status': 'completed' })
+      .sort({ createdAt: -1 })
+      .select('orderNumber status items pricing createdAt');
+
+    res.status(200).json({ success: true, orders });
+  } catch (error) {
+    console.error('[getMyOrders]', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch your orders.' });
+  }
+};

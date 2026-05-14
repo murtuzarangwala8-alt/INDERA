@@ -8,14 +8,18 @@ import { Category, refreshCategories, refreshProducts } from '../hooks/useProduc
 import {
   adminCreateCategory,
   adminCreateProduct,
+  adminCreateReview,
   adminDeleteCategory,
   adminDeleteProduct,
+  adminDeleteReview,
   adminDeleteUser,
   adminFetchOrders,
   adminFetchProducts,
+  adminFetchReviews,
   adminFetchUsers,
   adminLogin,
   adminSeedProducts,
+  adminToggleReviewApproval,
   adminUpdateOrderStatus,
   adminUpdateProduct,
   adminUpdateStock,
@@ -58,7 +62,18 @@ const AdminDashboard: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [allReviews, setAllReviews] = useState<any[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [showAddReview, setShowAddReview] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    productId: '',
+    rating: 5,
+    title: '',
+    body: '',
+    authorName: '',
+    authorEmail: '',
+    verifiedPurchase: false,
+  });
   const [newCategory, setNewCategory] = useState('');
   const [newCategoryImage, setNewCategoryImage] = useState('');
   const [search, setSearch] = useState('');
@@ -78,11 +93,12 @@ const AdminDashboard: React.FC = () => {
   const loadAdminData = async () => {
     setLoading(true);
     try {
-      const [productsResult, ordersResult, usersResult, categoriesResult] = await Promise.allSettled([
+      const [productsResult, ordersResult, usersResult, categoriesResult, reviewsResult] = await Promise.allSettled([
         adminFetchProducts({ limit: '100' }),
         adminFetchOrders({ limit: '25' }),
         adminFetchUsers({ limit: '50' }),
         fetchCategories(),
+        adminFetchReviews(),
       ]);
 
       if (productsResult.status === 'fulfilled') {
@@ -109,12 +125,48 @@ const AdminDashboard: React.FC = () => {
       if (categoriesResult.status === 'fulfilled') {
         if (categoriesResult.value.success) setCategories(categoriesResult.value.categories || []);
       }
+
+      if (reviewsResult.status === 'fulfilled') {
+        if (reviewsResult.value.success) setAllReviews(reviewsResult.value.reviews || []);
+      }
     } catch (error: any) {
       toast.error(`Admin API error: ${error?.message || 'Could not connect'}`);
     } finally {
       setLoading(false);
     }
   };
+
+  const handleAdminCreateReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewForm.productId) { toast.error('Select a product'); return; }
+    try {
+      const res = await adminCreateReview(reviewForm);
+      if (res.success) {
+        toast.success('Review added');
+        setShowAddReview(false);
+        setReviewForm({ productId: '', rating: 5, title: '', body: '', authorName: '', authorEmail: '', verifiedPurchase: false });
+        await loadAdminData();
+      } else {
+        toast.error(res.message || 'Could not add review');
+      }
+    } catch {
+      toast.error('Network error');
+    }
+  };
+
+  const handleDeleteReview = async (id: string) => {
+    const res = await adminDeleteReview(id);
+    if (res.success) { toast.success('Review deleted'); await loadAdminData(); }
+    else toast.error(res.message || 'Could not delete');
+  };
+
+  const handleToggleApproval = async (id: string) => {
+    const res = await adminToggleReviewApproval(id);
+    if (res.success) { toast.success(res.isApproved ? 'Review visible' : 'Review hidden'); await loadAdminData(); }
+    else toast.error(res.message || 'Could not update');
+  };
+
+
 
   useEffect(() => {
     if (sessionStorage.getItem('indera_admin_auth') === 'true') {
@@ -580,6 +632,165 @@ const AdminDashboard: React.FC = () => {
             </table>
           </div>
           {users.length === 0 && <p className="text-ivory/30 text-center py-10 font-serif text-xl">No accounts yet</p>}
+        </div>
+
+        {/* ── Reviews Management ─────────────────────────────── */}
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-serif text-ivory text-3xl font-light">Reviews</h2>
+            <button onClick={() => setShowAddReview(!showAddReview)} className="btn-gold flex items-center gap-2 py-3 px-5">
+              <Plus size={15} /> Add Review
+            </button>
+          </div>
+
+          {/* Add Review Form */}
+          {showAddReview && (
+            <div className="glass-dark rounded-sm p-6 mb-6" style={{ border: '1px solid rgba(201,168,76,0.15)' }}>
+              <h3 className="font-serif text-ivory text-xl font-light mb-5">Add Review to a Product</h3>
+              <form onSubmit={handleAdminCreateReview} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Product <span className="text-terracotta">*</span></label>
+                  <select
+                    value={reviewForm.productId}
+                    onChange={(e) => setReviewForm({ ...reviewForm, productId: e.target.value })}
+                    required
+                    className="w-full bg-obsidian border border-ivory/10 text-ivory px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50"
+                  >
+                    <option value="">— Select a product —</option>
+                    {products.map((p) => (
+                      <option key={String(p.id)} value={String(p.id)}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Reviewer Name <span className="text-terracotta">*</span></label>
+                    <input
+                      value={reviewForm.authorName}
+                      onChange={(e) => setReviewForm({ ...reviewForm, authorName: e.target.value })}
+                      placeholder="Jane Doe"
+                      required
+                      className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/40"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Email (optional)</label>
+                    <input
+                      type="email"
+                      value={reviewForm.authorEmail}
+                      onChange={(e) => setReviewForm({ ...reviewForm, authorEmail: e.target.value })}
+                      placeholder="jane@email.com"
+                      className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/40"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Rating <span className="text-terracotta">*</span></label>
+                    <select
+                      value={reviewForm.rating}
+                      onChange={(e) => setReviewForm({ ...reviewForm, rating: Number(e.target.value) })}
+                      className="w-full bg-obsidian border border-ivory/10 text-ivory px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50"
+                    >
+                      {[5, 4, 3, 2, 1].map((v) => (
+                        <option key={v} value={v}>{'⭐'.repeat(v)} {v} Star{v > 1 ? 's' : ''}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Review Title</label>
+                    <input
+                      value={reviewForm.title}
+                      onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })}
+                      placeholder="Summarise the review"
+                      className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/40"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Review Body <span className="text-terracotta">*</span></label>
+                  <textarea
+                    value={reviewForm.body}
+                    onChange={(e) => setReviewForm({ ...reviewForm, body: e.target.value })}
+                    placeholder="Write the review text…"
+                    rows={3}
+                    required
+                    className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/40 resize-none"
+                  />
+                </div>
+
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={reviewForm.verifiedPurchase}
+                    onChange={(e) => setReviewForm({ ...reviewForm, verifiedPurchase: e.target.checked })}
+                    className="w-4 h-4 accent-gold-400"
+                  />
+                  <span className="text-ivory/60 text-xs font-sans uppercase tracking-widest">Mark as Verified Purchase</span>
+                </label>
+
+                <div className="flex gap-3 pt-2">
+                  <button type="submit" className="btn-gold px-8 py-3">Save Review</button>
+                  <button type="button" onClick={() => setShowAddReview(false)} className="btn-outline px-6 py-3">Cancel</button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Reviews List */}
+          <div className="glass-dark rounded-sm overflow-hidden" style={{ border: '1px solid rgba(201,168,76,0.1)' }}>
+            {allReviews.length === 0 ? (
+              <p className="text-ivory/30 text-center py-10 font-serif text-xl">No reviews yet</p>
+            ) : (
+              <div className="divide-y divide-ivory/5">
+                {allReviews.map((review: any) => (
+                  <div key={review._id} className="px-6 py-4 flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-3 mb-1">
+                        <span className="text-ivory font-sans text-sm font-medium">{review.authorName}</span>
+                        <span className="text-gold-400 text-xs">{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span>
+                        {review.verifiedPurchase && (
+                          <span className="text-[9px] tracking-widest uppercase font-sans px-2 py-0.5 border border-green-400/30 text-green-400">Verified</span>
+                        )}
+                        <span className={`text-[9px] tracking-widest uppercase font-sans px-2 py-0.5 border ${
+                          review.isApproved ? 'border-green-400/20 text-green-400' : 'border-terracotta/30 text-terracotta'
+                        }`}>
+                          {review.isApproved ? 'Visible' : 'Hidden'}
+                        </span>
+                      </div>
+                      {review.title && <p className="text-ivory/70 text-sm font-sans font-medium mb-0.5">{review.title}</p>}
+                      <p className="text-ivory/40 text-xs font-sans leading-relaxed truncate max-w-xl">{review.body}</p>
+                      {review.product && (
+                        <p className="text-gold-400/60 text-[10px] font-sans mt-1 tracking-wider uppercase">
+                          {review.product?.name || review.product}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => handleToggleApproval(review._id)}
+                        className={`text-[9px] tracking-widest uppercase font-sans px-3 py-1.5 border transition-all ${
+                          review.isApproved ? 'border-terracotta/30 text-terracotta hover:bg-terracotta/10' : 'border-green-400/30 text-green-400 hover:bg-green-400/10'
+                        }`}
+                      >
+                        {review.isApproved ? 'Hide' : 'Show'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteReview(review._id)}
+                        className="p-2 border border-ivory/10 text-ivory/40 hover:text-terracotta hover:border-terracotta/30 transition-all rounded-sm"
+                        aria-label="Delete review"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <h2 className="font-serif text-ivory text-3xl font-light mb-4">Orders</h2>

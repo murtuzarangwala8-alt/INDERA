@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Heart, Star, ArrowLeft, Minus, Plus, ShoppingBag } from 'lucide-react';
+import { Heart, Lock, Star, ArrowLeft, Minus, Plus, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useProducts } from '../hooks/useProducts';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ProductCard';
-import { fetchProductReviews, submitProductReview } from '../services/api';
+import { fetchMyOrders, fetchProductReviews, submitProductReview } from '../services/api';
 import toast from 'react-hot-toast';
 
 
@@ -32,9 +33,11 @@ const ProductDetail: React.FC = () => {
         .finally(() => setReviewLoading(false));
     }
   }, [product?.id]);
+  const { token, user } = useAuth();
   const { addToCart, toggleWishlist, wishlist } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState<string>('');
+  const [hasPurchased, setHasPurchased] = useState<boolean | null>(null); // null = checking
 
   // Build the full images array — fall back to single image if no array
   const allImages = (product?.images?.length ? product.images : product?.image ? [product.image] : []);
@@ -43,6 +46,23 @@ const ProductDetail: React.FC = () => {
   useEffect(() => {
     if (allImages.length > 0) setSelectedImage(allImages[0]);
   }, [product?.id]);
+
+  // Check if this user has purchased this product
+  useEffect(() => {
+    if (!token || !product?.id) { setHasPurchased(false); return; }
+    fetchMyOrders(token)
+      .then((res) => {
+        if (res.success) {
+          const bought = (res.orders || []).some((order: any) =>
+            order.items?.some((item: any) => String(item.productId) === String(product.id))
+          );
+          setHasPurchased(bought);
+        } else {
+          setHasPurchased(false);
+        }
+      })
+      .catch(() => setHasPurchased(false));
+  }, [token, product?.id]);
 
 
   if (!product) {
@@ -189,9 +209,23 @@ const ProductDetail: React.FC = () => {
               </div>
 
               <div className="flex gap-3">
-                <button onClick={() => setShowReviewForm(true)} className="btn-outline">
-                  Write a Review
-                </button>
+                {/* Purchase-gated review button */}
+                {!user ? (
+                  <button
+                    onClick={() => navigate('/account')}
+                    className="btn-outline flex items-center gap-2 text-sm"
+                  >
+                    <Lock size={13} /> Login to Review
+                  </button>
+                ) : hasPurchased ? (
+                  <button onClick={() => setShowReviewForm(true)} className="btn-outline">
+                    Write a Review
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 border border-obsidian/10 px-4 py-3 text-xs text-obsidian/40 font-sans">
+                    <Lock size={12} /> Verified buyers only
+                  </div>
+                )}
                 <button
                   onClick={handleAddToCart}
                   disabled={!product.inStock}
@@ -223,12 +257,19 @@ const ProductDetail: React.FC = () => {
                 Reviews {reviews.length > 0 && <span className="text-obsidian/30 text-2xl">({reviews.length})</span>}
               </h2>
             </div>
-            <button
-              onClick={() => setShowReviewForm(true)}
-              className="btn-gold px-6 py-3 text-sm"
-            >
-              Write a Review
-            </button>
+            {!user ? (
+              <button onClick={() => navigate('/account')} className="btn-outline flex items-center gap-2 text-sm px-5 py-3">
+                <Lock size={13} /> Login to Review
+              </button>
+            ) : hasPurchased ? (
+              <button onClick={() => setShowReviewForm(true)} className="btn-gold px-6 py-3 text-sm">
+                Write a Review
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 border border-obsidian/10 px-4 py-3 text-xs text-obsidian/40 font-sans">
+                <Lock size={12} /> Only verified buyers can review
+              </div>
+            )}
           </div>
 
           {reviewLoading && (
@@ -327,13 +368,14 @@ const ProductDetail: React.FC = () => {
               e.preventDefault();
               setReviewLoading(true);
               try {
-                const res = await submitProductReview(String(product.id), {
+                const res = await submitProductReview(String(product!.id), {
                   rating: reviewData.rating,
                   title: reviewData.title,
                   body: reviewData.body,
                   authorName: reviewData.authorName,
                   authorEmail: reviewData.authorEmail,
                   photos: reviewData.photos,
+                  token: token || undefined,
                 });
                 if (res.success) {
                   toast.success('Review submitted — thank you!');
@@ -480,7 +522,7 @@ const ProductDetail: React.FC = () => {
                         type="button"
                         onClick={() => setReviewData(prev => ({ ...prev, photos: prev.photos.filter((_, idx) => idx !== i) }))}
                         className="absolute -top-2 -right-2 bg-terracotta text-ivory rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                      >×</button>
+                      >&#x00D7;</button>
                     </div>
                   ))}
                 </div>

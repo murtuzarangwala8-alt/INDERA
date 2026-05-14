@@ -38,23 +38,34 @@ export const submitReview = async (req, res) => {
     let userId;
     let verifiedPurchase = false;
 
-    // Optional auth — check if logged in
+    // Require auth — only logged-in users who bought this product can review
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       try {
         const decoded = verifyToken(authHeader.split(' ')[1]);
         userId = decoded.id;
-      } catch {}
+      } catch {
+        return res.status(401).json({ success: false, message: 'Invalid or expired session. Please log in again.' });
+      }
+    } else {
+      return res.status(401).json({ success: false, message: 'You must be logged in to write a review.' });
     }
 
-    // Check verified purchase (by email or userId)
-    if (authorEmail || userId) {
-      const query = userId
-        ? { user: userId, 'items.productId': productId, 'payment.status': 'completed' }
-        : { 'customer.email': authorEmail, 'items.productId': productId, 'payment.status': 'completed' };
-      const order = await Order.findOne(query);
-      if (order) verifiedPurchase = true;
+    // Verify they have a completed order containing this product
+    const purchaseQuery = { user: userId, 'payment.status': 'completed' };
+    const orders = await Order.find(purchaseQuery).select('items');
+    const hasPurchased = orders.some((order) =>
+      order.items?.some((item) => String(item.productId) === String(productId))
+    );
+
+    if (!hasPurchased) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only customers who have purchased this product can leave a review.',
+      });
     }
+
+    verifiedPurchase = true;
 
     // Duplicate guard
     if (authorEmail) {
@@ -83,6 +94,39 @@ export const submitReview = async (req, res) => {
     }
     console.error('Submit review error:', error);
     res.status(500).json({ success: false, message: 'Failed to submit review' });
+  }
+};
+
+// POST /api/admin/reviews  — admin creates a review for any product
+export const adminCreateReview = async (req, res) => {
+  try {
+    const { productId, rating, title, body, authorName, authorEmail, verifiedPurchase, photos } = req.body;
+
+    if (!productId || !rating || !body || !authorName) {
+      return res.status(400).json({ success: false, message: 'productId, rating, authorName and review text are required' });
+    }
+
+    const reviewPhotos = Array.isArray(photos) ? photos.slice(0, 5).filter((p) => typeof p === 'string') : [];
+
+    const review = await Review.create({
+      product: productId,
+      authorName: authorName.trim(),
+      authorEmail: authorEmail ? authorEmail.trim().toLowerCase() : undefined,
+      rating: Number(rating),
+      title: title ? title.trim() : undefined,
+      body: body.trim(),
+      photos: reviewPhotos,
+      verifiedPurchase: Boolean(verifiedPurchase),
+      isApproved: true,
+    });
+
+    res.status(201).json({ success: true, message: 'Review created', review });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: 'A review from this email already exists for this product' });
+    }
+    console.error('Admin create review error:', error);
+    res.status(500).json({ success: false, message: 'Failed to create review' });
   }
 };
 

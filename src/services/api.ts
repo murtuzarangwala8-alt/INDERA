@@ -34,6 +34,13 @@ export const fetchCategories = async () => {
   return res.json();
 };
 
+export const fetchMyOrders = async (token: string) => {
+  const res = await fetch(`${API_URL}/orders/my`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.json();
+};
+
 // ── Reviews ─────────────────────────────────────────────────────
 
 export const fetchProductReviews = async (productId: string) => {
@@ -48,11 +55,15 @@ export const submitProductReview = async (productId: string, data: {
   authorName: string;
   authorEmail?: string;
   photos?: string[];
+  token?: string;
 }) => {
+  const { token, ...payload } = data;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${API_URL}/reviews/${productId}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    headers,
+    body: JSON.stringify(payload),
   });
   return res.json();
 };
@@ -173,3 +184,43 @@ export const adminUpdateOrderStatus = async (id: string, status: string) => {
   return res.json();
 };
 
+// ── Admin Reviews ──────────────────────────────────────────────
+
+export const adminFetchReviews = async () => {
+  const res = await fetch(`${API_URL}/admin/reviews`, { headers: adminHeaders() });
+  return res.json();
+};
+
+export const adminCreateReview = async (data: {
+  productId: string;
+  rating: number;
+  title?: string;
+  body: string;
+  authorName: string;
+  authorEmail?: string;
+  verifiedPurchase?: boolean;
+  photos?: string[];
+}) => {
+  const res = await fetch(`${API_URL}/admin/reviews`, {
+    method: 'POST',
+    headers: adminHeaders(),
+    body: JSON.stringify(data),
+  });
+  return res.json();
+};
+
+export const adminDeleteReview = async (id: string) => {
+  const res = await fetch(`${API_URL}/admin/reviews/${id}`, {
+    method: 'DELETE',
+    headers: adminHeaders(),
+  });
+  return res.json();
+};
+
+export const adminToggleReviewApproval = async (id: string) => {
+  const res = await fetch(`${API_URL}/admin/reviews/${id}/approve`, {
+    method: 'PATCH',
+    headers: adminHeaders(),
+  });
+  return res.json();
+};

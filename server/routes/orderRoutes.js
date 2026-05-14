@@ -4,6 +4,7 @@ import {
   createPaymentIntent,
   confirmPayment,
   getAllOrders,
+  getMyOrders,
   getOrderById,
   getOrderByNumber,
   updateOrderStatus,
@@ -18,6 +19,7 @@ router.post('/orders', createOrder);
 router.post('/payment/create-intent', createPaymentIntent);
 router.post('/payment/confirm', confirmPayment);
 router.get('/orders/number/:orderNumber', getOrderByNumber);
+router.get('/orders/my', getMyOrders);
 
 // Admin routes
 router.get('/orders', adminAuth, getAllOrders);
