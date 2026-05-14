@@ -126,17 +126,21 @@ const AdminDashboard: React.FC = () => {
   const handleAuth = async (event: React.FormEvent) => {
     event.preventDefault();
     setAuthLoading(true);
-    const response = await adminLogin(adminEmail.trim(), adminPassword);
-    setAuthLoading(false);
-
-    if (response.success && response.adminKey) {
-      sessionStorage.setItem('indera_admin_key', response.adminKey);
-      sessionStorage.setItem('indera_admin_auth', 'true');
-      setAuthenticated(true);
-      toast.success('Welcome to admin');
-      loadAdminData();
-    } else {
-      toast.error(response.message || 'Invalid admin login');
+    try {
+      const response = await adminLogin(adminEmail.trim(), adminPassword);
+      if (response.success && response.adminKey) {
+        sessionStorage.setItem('indera_admin_key', response.adminKey);
+        sessionStorage.setItem('indera_admin_auth', 'true');
+        setAuthenticated(true);
+        toast.success('Welcome to admin');
+        loadAdminData();
+      } else {
+        toast.error(response.message || 'Invalid admin login');
+      }
+    } catch (err: any) {
+      toast.error(`Cannot reach server: ${err?.message || 'Check that the backend is running on port 5000'}`);
+    } finally {
+      setAuthLoading(false);
     }
   };
 

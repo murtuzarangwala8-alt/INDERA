@@ -126,9 +126,16 @@ app.get('/api/config/stripe', (req, res) => {
 app.post('/api/admin/login', adminLoginLimiter, (req, res) => {
   const { email, password } = req.body;
 
-  // Hard-fail if env vars are not configured — never fall back to defaults
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
+
+  // DEBUG — remove after fix confirmed
+  console.log('[ADMIN LOGIN] Received:', { email, passwordLength: password?.length });
+  console.log('[ADMIN LOGIN] Env vars loaded:', {
+    ADMIN_EMAIL: adminEmail || '(NOT SET)',
+    ADMIN_PASSWORD: adminPassword ? '(SET)' : '(NOT SET)',
+    ADMIN_API_KEY: process.env.ADMIN_API_KEY ? '(SET)' : '(NOT SET)',
+  });
 
   if (!adminEmail || !adminPassword) {
     console.error('FATAL: ADMIN_EMAIL and ADMIN_PASSWORD env vars are not set');
@@ -141,12 +148,14 @@ app.post('/api/admin/login', adminLoginLimiter, (req, res) => {
   }
 
   if (email === adminEmail && password === adminPassword) {
+    console.log('[ADMIN LOGIN] Success for:', email);
     return res.json({
       success: true,
       adminKey: process.env.ADMIN_API_KEY,
     });
   }
 
+  console.warn('[ADMIN LOGIN] Failed — email/password mismatch');
   res.status(401).json({
     success: false,
     message: 'Invalid admin email or password',
