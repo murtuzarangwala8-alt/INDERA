@@ -1,16 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Heart, Star, ArrowLeft, Minus, Plus, ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useProducts } from '../hooks/useProducts';
 import { useCart } from '../context/CartContext';
 import ProductCard from '../components/ProductCard';
+import { fetchProductReviews, submitProductReview } from '../services/api';
+import toast from 'react-hot-toast';
+
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const products = useProducts();
   const product = products.find((p) => String(p.id) === id && p.isActive !== false && !p.hidden);
+
+  // Reviews state
+  const [, setReviews] = useState<any[]>([]);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewData, setReviewData] = useState({ rating: 5, title: '', body: '', authorName: '', authorEmail: '' });
+
+  // Load reviews when product changes
+  useEffect(() => {
+    if (product?.id) {
+      setReviewLoading(true);
+      fetchProductReviews(String(product.id))
+        .then((res) => {
+          if (res.success) setReviews(res.reviews || []);
+        })
+        .finally(() => setReviewLoading(false));
+    }
+  }, [product?.id]);
   const { addToCart, toggleWishlist, wishlist } = useCart();
   const [quantity, setQuantity] = useState(1);
 
@@ -131,6 +152,9 @@ const ProductDetail: React.FC = () => {
               </div>
 
               <div className="flex gap-3">
+                <button onClick={() => setShowReviewForm(true)} className="btn-outline">
+                  Write a Review
+                </button>
                 <button
                   onClick={handleAddToCart}
                   disabled={!product.inStock}
@@ -149,6 +173,105 @@ const ProductDetail: React.FC = () => {
                   <Heart size={18} className={isWishlisted ? 'fill-current' : ''} />
                 </button>
               </div>
+{showReviewForm && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-ivory p-6 rounded-md w-full max-w-md">
+      <h2 className="text-obsidian text-xl mb-4">Write a Review</h2>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setReviewLoading(true);
+          const payload = {
+            rating: reviewData.rating,
+            title: reviewData.title,
+            body: reviewData.body,
+            authorName: reviewData.authorName,
+            authorEmail: reviewData.authorEmail,
+          };
+          const res = await submitProductReview(String(product.id), payload);
+          if (res.success) {
+            toast.success('Review submitted');
+            setShowReviewForm(false);
+            // Refresh reviews
+            fetchProductReviews(String(product.id)).then(r => {
+              if (r.success) setReviews(r.reviews || []);
+            });
+          } else {
+            toast.error(res.message || 'Failed to submit review');
+          }
+          setReviewLoading(false);
+        }}
+        className="space-y-4"
+      >
+        <div>
+          <label className="block text-obsidian mb-1">Rating</label>
+          <select
+            value={reviewData.rating}
+            onChange={(e) => setReviewData({ ...reviewData, rating: Number(e.target.value) })}
+            className="w-full border p-2 rounded"
+          >
+            {[5,4,3,2,1].map((v) => (
+              <option key={v} value={v}>{v} Stars</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-obsidian mb-1">Title</label>
+          <input
+            type="text"
+            value={reviewData.title}
+            onChange={(e) => setReviewData({ ...reviewData, title: e.target.value })}
+            className="w-full border p-2 rounded"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-obsidian mb-1">Review</label>
+          <textarea
+            value={reviewData.body}
+            onChange={(e) => setReviewData({ ...reviewData, body: e.target.value })}
+            className="w-full border p-2 rounded"
+            rows={4}
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-obsidian mb-1">Your Name</label>
+          <input
+            type="text"
+            value={reviewData.authorName}
+            onChange={(e) => setReviewData({ ...reviewData, authorName: e.target.value })}
+            className="w-full border p-2 rounded"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-obsidian mb-1">Email</label>
+          <input
+            type="email"
+            value={reviewData.authorEmail}
+            onChange={(e) => setReviewData({ ...reviewData, authorEmail: e.target.value })}
+            className="w-full border p-2 rounded"
+            required
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={reviewLoading}
+          className="btn-gold w-full"
+        >
+          {reviewLoading ? 'Submitting...' : 'Submit Review'}
+        </button>
+      </form>
+      <button
+        onClick={() => setShowReviewForm(false)}
+        className="mt-4 btn-outline w-full"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+)}
             </div>
           </motion.div>
         </div>

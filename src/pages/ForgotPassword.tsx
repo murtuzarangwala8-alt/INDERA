@@ -10,7 +10,6 @@ export const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const [resetUrl, setResetUrl] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,11 +17,13 @@ export const ForgotPassword: React.FC = () => {
     const res = await forgotPassword(email);
     setLoading(false);
     if (res.success) {
-      setResetUrl(res.resetUrl || '');
       setSent(true);
-      if (res.emailSent === false) toast.error('Email sending failed. Use the setup link shown below.');
+      if (res.emailSent === false) {
+        toast.error('Email sending failed. Please contact support.');
+      }
+    } else {
+      toast.error(res.message || 'Something went wrong');
     }
-    else toast.error(res.message || 'Something went wrong');
   };
 
   return (
@@ -63,11 +64,6 @@ export const ForgotPassword: React.FC = () => {
               <p className="text-ivory/40 text-sm font-sans leading-relaxed">
                 If an account exists for <span className="text-gold-400">{email}</span>, a reset link has been sent.
               </p>
-              {resetUrl && (
-                <a href={resetUrl} className="btn-gold inline-flex mt-6 px-6 py-3">
-                  Open Reset Link
-                </a>
-              )}
             </div>
           )}
 

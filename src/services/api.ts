@@ -1,6 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-const getAdminKey = () => sessionStorage.getItem('indera_admin_key') || import.meta.env.VITE_ADMIN_KEY || '';
+// Admin key is stored in sessionStorage after login — never in env vars or JS bundle
+const getAdminKey = () => sessionStorage.getItem('indera_admin_key') || '';
 
 const adminHeaders = () => ({
   'Content-Type': 'application/json',
@@ -30,6 +31,28 @@ export const fetchProductById = async (id: string) => {
 
 export const fetchCategories = async () => {
   const res = await fetch(`${API_URL}/categories`);
+  return res.json();
+};
+
+// ── Reviews ─────────────────────────────────────────────────────
+
+export const fetchProductReviews = async (productId: string) => {
+  const res = await fetch(`${API_URL}/reviews/${productId}`);
+  return res.json();
+};
+
+export const submitProductReview = async (productId: string, data: {
+  rating: number;
+  title?: string;
+  body: string;
+  authorName: string;
+  authorEmail?: string;
+}) => {
+  const res = await fetch(`${API_URL}/reviews/${productId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
   return res.json();
 };
 

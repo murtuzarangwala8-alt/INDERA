@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { CheckCircle, Package, ArrowRight, Home, ShoppingBag } from 'lucide-react';
 
 interface OrderItem {
+  id?: string;
   name: string;
   brand: string;
   price: number;

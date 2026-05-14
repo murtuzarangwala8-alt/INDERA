@@ -17,26 +17,28 @@ import {
   adminDeleteUser,
 } from '../controllers/authController.js';
 import { adminAuth, protect } from '../middleware/auth.js';
+import { authLimiter, otpLimiter } from '../middleware/rateLimits.js';
 
 const router = express.Router();
 
-router.post('/register',        register);
-router.post('/verify-phone',    verifyPhone);
-router.post('/resend-otp',      resendOtp);
-router.post('/login',           login);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password',  resetPassword);
+// ── Public (rate-limited) ──────────────────────────────────────
+router.post('/register',        authLimiter, register);
+router.post('/login',           authLimiter, login);
+router.post('/forgot-password', authLimiter, forgotPassword);
+router.post('/reset-password',  authLimiter, resetPassword);
+router.post('/verify-phone',    otpLimiter,  verifyPhone);
+router.post('/resend-otp',      otpLimiter,  resendOtp);
 
-// Protected
-router.get('/me',           protect, getMe);
-router.put('/profile',      protect, updateProfile);
-router.get('/orders',       protect, getMyOrders);
-router.post('/addresses',   protect, addAddress);
+// ── Protected (user must be logged in) ────────────────────────
+router.get('/me',               protect, getMe);
+router.put('/profile',          protect, updateProfile);
+router.get('/orders',           protect, getMyOrders);
+router.post('/addresses',       protect, addAddress);
 router.delete('/addresses/:id', protect, deleteAddress);
-router.get('/cart',         protect, getCart);
-router.put('/cart',         protect, saveCart);
+router.get('/cart',             protect, getCart);
+router.put('/cart',             protect, saveCart);
 
-// Admin account management
+// ── Admin account management ───────────────────────────────────
 router.get('/admin/users',        adminAuth, adminGetUsers);
 router.delete('/admin/users/:id', adminAuth, adminDeleteUser);
 

@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import connectDB from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
@@ -8,12 +10,13 @@ import orderRoutes from './routes/orderRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import returnRoutes from './routes/returnRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
 import { stripeEnabled } from './config/stripe.js';
-
 dotenv.config();
 
 const app = express();
 
+// ── Allowed origins ────────────────────────────────────────────
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:4173',
@@ -21,13 +24,75 @@ const allowedOrigins = [
   'https://www.indera.it',
 ];
 
-app.use(cors({
-  origin: true,
-  credentials: true,
-}));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+// ── Security headers (helmet) ──────────────────────────────────
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", 'https://js.stripe.com'],
+        frameSrc: ["'self'", 'https://js.stripe.com'],
+        connectSrc: ["'self'", 'https://api.stripe.com'],
+        imgSrc: ["'self'", 'data:', 'https://images.unsplash.com', 'https://*.unsplash.com'],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        fontSrc: ["'self'", 'data:'],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    crossOriginEmbedderPolicy: false, // needed for Stripe
+  })
+);
 
+// ── CORS — whitelist only ──────────────────────────────────────
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow server-to-server requests (no origin) and whitelisted origins
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origin '${origin}' not allowed`));
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-key'],
+  })
+);
+
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+
+// ── Global rate limiter (all routes) ──────────────────────────
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests. Please try again later.' },
+});
+app.use(globalLimiter);
+
+// ── Auth rate limiters (imported by routes) ───────────────────
+// Defined in middleware/rateLimits.js to avoid circular imports
+
+// ── Admin login limiter ────────────────────────────────────────
+const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many admin login attempts. Try again in 15 minutes.' },
+});
+
+// ── Health check ───────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
@@ -37,6 +102,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// ── Stripe public key (safe to expose) ────────────────────────
 app.get('/api/config/stripe', (req, res) => {
   const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
   const hasStripeKey = Boolean(
@@ -53,10 +119,23 @@ app.get('/api/config/stripe', (req, res) => {
   });
 });
 
-app.post('/api/admin/login', (req, res) => {
+// ── Admin login ────────────────────────────────────────────────
+app.post('/api/admin/login', adminLoginLimiter, (req, res) => {
   const { email, password } = req.body;
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@indera.it';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'sakina@110';
+
+  // Hard-fail if env vars are not configured — never fall back to defaults
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    console.error('FATAL: ADMIN_EMAIL and ADMIN_PASSWORD env vars are not set');
+    return res.status(503).json({ success: false, message: 'Admin login is not configured on this server' });
+  }
+
+  if (!process.env.ADMIN_API_KEY) {
+    console.error('FATAL: ADMIN_API_KEY env var is not set');
+    return res.status(503).json({ success: false, message: 'Admin API key is not configured' });
+  }
 
   if (email === adminEmail && password === adminPassword) {
     return res.json({
@@ -71,6 +150,7 @@ app.post('/api/admin/login', (req, res) => {
   });
 });
 
+// ── DB connection middleware ───────────────────────────────────
 app.use(async (req, res, next) => {
   try {
     await connectDB();
@@ -80,22 +160,32 @@ app.use(async (req, res, next) => {
   }
 });
 
+// ── Routes ─────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/auth/oauth', oauthRoutes);
 app.use('/api', productRoutes);
 app.use('/api', orderRoutes);
+app.use('/api', reviewRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/returns', returnRoutes);
 
+// ── Centralised error handler ──────────────────────────────────
 app.use((err, req, res, next) => {
-  console.error(err.stack || err);
-  res.status(500).json({
+  const isDev = process.env.NODE_ENV === 'development';
+  console.error('[ERROR]', err.stack || err.message || err);
+
+  // CORS errors
+  if (err.message && err.message.startsWith('CORS:')) {
+    return res.status(403).json({ success: false, message: err.message });
+  }
+
+  res.status(err.status || 500).json({
     success: false,
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    message: isDev ? err.message : 'Something went wrong. Please try again.',
   });
 });
 
+// ── 404 handler ────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
 });

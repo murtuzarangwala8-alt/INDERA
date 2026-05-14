@@ -2,11 +2,9 @@ import User from '../models/User.js';
 import Order from '../models/Order.js';
 import { generateToken, generateOtp, otpExpiry, generateResetToken } from '../utils/auth.js';
 import { sendWelcomeEmail, sendPasswordResetEmail } from '../utils/email.js';
-import { sendSmsOtp, sendWhatsappOtp } from '../utils/sms.js';
+import { sendWhatsappOtp } from '../utils/sms.js';
 import crypto from 'crypto';
 
-const shouldExposeOtp = () => process.env.NODE_ENV !== 'production';
-const allowSetupResetLink = () => process.env.NODE_ENV !== 'production' || process.env.SHOW_SETUP_CODES === 'true';
 const phoneVerificationRequired = () => process.env.REQUIRE_WHATSAPP_OTP !== 'false';
 const firstDeliveryError = (delivery) => delivery.find((item) => item.status === 'rejected')?.reason?.message;
 
@@ -17,6 +15,15 @@ export const register = async (req, res) => {
 
     if (!firstName || !lastName || !email || !phone || !password) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+
+    // Basic email format check
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ success: false, message: 'Invalid email address' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
     }
 
     const existingEmail = await User.findOne({ email: email.toLowerCase() });
@@ -34,8 +41,8 @@ export const register = async (req, res) => {
     const expiry = otpExpiry();
 
     const user = new User({
-      firstName,
-      lastName,
+      firstName: String(firstName).trim().slice(0, 50),
+      lastName: String(lastName).trim().slice(0, 50),
       email,
       phone,
       password,
@@ -47,26 +54,35 @@ export const register = async (req, res) => {
 
     await user.save();
 
-    const delivery = requirePhoneOtp ? await Promise.allSettled([sendWhatsappOtp(phone, phoneOtp)]) : [];
-    const exposeOtp = shouldExposeOtp(delivery);
+    const delivery = requirePhoneOtp
+      ? await Promise.allSettled([sendWhatsappOtp(phone, phoneOtp)])
+      : [];
     const whatsappError = firstDeliveryError(delivery);
+
+    // Log OTP to server console only in non-production (never send in response)
+    if (process.env.NODE_ENV !== 'production' && requirePhoneOtp) {
+      console.log(`[DEV] OTP for ${phone}: ${phoneOtp}`);
+    }
 
     res.status(201).json({
       success: true,
-      message: whatsappError ? `Account created, but WhatsApp code could not be sent: ${whatsappError}` : 'Account created. Please verify your WhatsApp number.',
+      message: whatsappError
+        ? `Account created, but WhatsApp code could not be sent: ${whatsappError}`
+        : 'Account created. Please verify your WhatsApp number.',
       userId: user._id,
       nextStep: requirePhoneOtp ? 'verify-phone' : 'complete',
-      phoneOtp: exposeOtp && requirePhoneOtp ? phoneOtp : undefined,
       whatsappVerificationRequired: requirePhoneOtp,
       whatsappSent: !whatsappError,
       delivery: delivery.map((item) => item.status),
+      // phoneOtp intentionally omitted — never expose OTP in API response
     });
   } catch (error) {
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern)[0];
       return res.status(409).json({ success: false, message: `${field} already in use` });
     }
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[register]', error);
+    res.status(500).json({ success: false, message: 'Registration failed. Please try again.' });
   }
 };
 
@@ -74,29 +90,32 @@ export const register = async (req, res) => {
 export const verifyPhone = async (req, res) => {
   try {
     const { userId, otp } = req.body;
-    if (!userId || !otp) return res.status(400).json({ success: false, message: 'userId and otp are required' });
+    if (!userId || !otp) {
+      return res.status(400).json({ success: false, message: 'userId and otp are required' });
+    }
 
     const user = await User.findById(userId).select('+phoneOtp +phoneOtpExpiry');
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     if (user.phoneVerified) return res.status(400).json({ success: false, message: 'Phone already verified' });
-    if (!user.phoneOtp || user.phoneOtp !== otp) return res.status(400).json({ success: false, message: 'Invalid OTP' });
-    if (new Date() > user.phoneOtpExpiry) return res.status(400).json({ success: false, message: 'OTP expired. Please request a new one.' });
+    if (!user.phoneOtp || user.phoneOtp !== otp) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP' });
+    }
+    if (new Date() > user.phoneOtpExpiry) {
+      return res.status(400).json({ success: false, message: 'OTP expired. Please request a new one.' });
+    }
 
     user.phoneVerified = true;
     user.phoneOtp = undefined;
     user.phoneOtpExpiry = undefined;
+    if (!user.emailVerified) user.emailVerified = true;
     await user.save();
-
-    if (!user.emailVerified) {
-      user.emailVerified = true;
-      await user.save();
-    }
 
     try {
       await sendWelcomeEmail(user.email, user.firstName);
     } catch (emailError) {
       console.warn('Welcome email failed:', emailError.message);
     }
+
     const token = generateToken(user._id, user.role);
     return res.json({
       success: true,
@@ -105,32 +124,44 @@ export const verifyPhone = async (req, res) => {
       user: user.toSafeObject(),
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[verifyPhone]', error);
+    res.status(500).json({ success: false, message: 'Verification failed. Please try again.' });
   }
 };
 
 // ── POST /api/auth/resend-otp ──────────────────────────────────
 export const resendOtp = async (req, res) => {
   try {
-    const { userId, type } = req.body; // type: 'email' | 'phone'
-    if (!userId || !type) return res.status(400).json({ success: false, message: 'userId and type are required' });
+    const { userId, type } = req.body;
+    if (!userId || !type) {
+      return res.status(400).json({ success: false, message: 'userId and type are required' });
+    }
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-
-    const otp = generateOtp();
-    const expiry = otpExpiry();
 
     if (type !== 'phone') {
       return res.status(400).json({ success: false, message: 'Email verification is disabled. Use WhatsApp verification.' });
     }
 
-    if (user.phoneVerified) return res.status(400).json({ success: false, message: 'WhatsApp already verified' });
+    if (user.phoneVerified) {
+      return res.status(400).json({ success: false, message: 'WhatsApp already verified' });
+    }
+
+    const otp = generateOtp();
+    const expiry = otpExpiry();
     user.phoneOtp = otp;
     user.phoneOtpExpiry = expiry;
     await user.save();
+
     const delivery = await Promise.allSettled([sendWhatsappOtp(user.phone, otp)]);
     const whatsappError = firstDeliveryError(delivery);
+
+    // Log OTP to server console only in non-production
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[DEV] Resent OTP for ${user.phone}: ${otp}`);
+    }
+
     if (whatsappError) {
       return res.status(502).json({ success: false, message: `WhatsApp code could not be sent: ${whatsappError}` });
     }
@@ -138,10 +169,11 @@ export const resendOtp = async (req, res) => {
     return res.json({
       success: true,
       message: 'New code sent to your WhatsApp',
-      otp: shouldExposeOtp(delivery) ? otp : undefined,
+      // otp intentionally omitted — never expose OTP in API response
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[resendOtp]', error);
+    res.status(500).json({ success: false, message: 'Could not resend OTP. Please try again.' });
   }
 };
 
@@ -149,7 +181,9 @@ export const resendOtp = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ success: false, message: 'Email and password are required' });
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    }
 
     const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
     if (!user) return res.status(401).json({ success: false, message: 'Invalid email or password' });
@@ -165,13 +199,20 @@ export const login = async (req, res) => {
       user.phoneOtp = otp;
       user.phoneOtpExpiry = otpExpiry();
       await user.save();
+
       const delivery = await Promise.allSettled([sendWhatsappOtp(user.phone, otp)]);
+
+      // Log OTP to server console only in non-production
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[DEV] Login OTP for ${user.phone}: ${otp}`);
+      }
+
       return res.status(403).json({
         success: false,
         message: 'Please verify your WhatsApp number. A new code has been sent.',
         userId: user._id,
         nextStep: 'verify-phone',
-        phoneOtp: shouldExposeOtp(delivery) ? otp : undefined,
+        // phoneOtp intentionally omitted
       });
     }
 
@@ -181,7 +222,8 @@ export const login = async (req, res) => {
     const token = generateToken(user._id, user.role);
     res.json({ success: true, token, user: user.toSafeObject() });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[login]', error);
+    res.status(500).json({ success: false, message: 'Login failed. Please try again.' });
   }
 };
 
@@ -192,7 +234,8 @@ export const getMe = async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     res.json({ success: true, user: user.toSafeObject() });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[getMe]', error);
+    res.status(500).json({ success: false, message: 'Could not fetch profile.' });
   }
 };
 
@@ -204,7 +247,9 @@ export const forgotPassword = async (req, res) => {
 
     const user = await User.findOne({ email: email.toLowerCase() });
     // Always return success to prevent email enumeration
-    if (!user) return res.json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+    if (!user) {
+      return res.json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+    }
 
     const token = generateResetToken();
     user.passwordResetToken = crypto.createHash('sha256').update(token).digest('hex');
@@ -217,17 +262,21 @@ export const forgotPassword = async (req, res) => {
       await sendPasswordResetEmail(user.email, user.firstName, resetUrl);
     } catch (emailError) {
       emailSent = false;
-      console.warn('Password reset link generated, but email failed:', emailError.message);
+      // Log the reset URL server-side only — never expose in API response
+      console.warn(`[forgotPassword] Email failed for ${user.email}. Reset URL: ${resetUrl}`);
     }
 
     res.json({
       success: true,
-      message: emailSent ? 'If that email exists, a reset link has been sent.' : 'Reset link created, but email sending failed.',
+      message: emailSent
+        ? 'If that email exists, a reset link has been sent.'
+        : 'Reset link generated but email delivery failed. Check server logs.',
       emailSent,
-      resetUrl: allowSetupResetLink() ? resetUrl : undefined,
+      // resetUrl intentionally omitted — never expose reset tokens in API response
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[forgotPassword]', error);
+    res.status(500).json({ success: false, message: 'Could not process request. Please try again.' });
   }
 };
 
@@ -235,8 +284,12 @@ export const forgotPassword = async (req, res) => {
 export const resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body;
-    if (!token || !password) return res.status(400).json({ success: false, message: 'Token and password are required' });
-    if (password.length < 8) return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
+    if (!token || !password) {
+      return res.status(400).json({ success: false, message: 'Token and password are required' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
+    }
 
     const hashed = crypto.createHash('sha256').update(token).digest('hex');
     const user = await User.findOne({
@@ -244,7 +297,9 @@ export const resetPassword = async (req, res) => {
       passwordResetExpiry: { $gt: new Date() },
     });
 
-    if (!user) return res.status(400).json({ success: false, message: 'Invalid or expired reset token' });
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired reset token' });
+    }
 
     user.password = password;
     user.passwordResetToken = undefined;
@@ -254,25 +309,34 @@ export const resetPassword = async (req, res) => {
     const jwtToken = generateToken(user._id, user.role);
     res.json({ success: true, message: 'Password reset successfully', token: jwtToken, user: user.toSafeObject() });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[resetPassword]', error);
+    res.status(500).json({ success: false, message: 'Could not reset password. Please try again.' });
   }
 };
 
 // ── PUT /api/auth/profile ──────────────────────────────────────
 export const updateProfile = async (req, res) => {
   try {
-    const { firstName, lastName, phone, shippingAddresses } = req.body;
+    // Whitelist only safe, user-editable fields — prevent mass assignment
+    const { firstName, lastName, phone } = req.body;
+    const updateData = {};
+    if (firstName !== undefined) updateData.firstName = String(firstName).trim().slice(0, 50);
+    if (lastName !== undefined) updateData.lastName = String(lastName).trim().slice(0, 50);
+    if (phone !== undefined) updateData.phone = String(phone).trim().slice(0, 20);
+
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { firstName, lastName, phone, shippingAddresses },
+      updateData,
       { new: true, runValidators: true }
     );
     res.json({ success: true, user: user.toSafeObject() });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[updateProfile]', error);
+    res.status(500).json({ success: false, message: 'Could not update profile.' });
   }
 };
 
+// ── GET /api/auth/orders ───────────────────────────────────────
 export const getMyOrders = async (req, res) => {
   try {
     const orders = await Order.find({
@@ -283,36 +347,62 @@ export const getMyOrders = async (req, res) => {
     }).sort({ createdAt: -1 });
     res.json({ success: true, orders });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[getMyOrders]', error);
+    res.status(500).json({ success: false, message: 'Could not fetch orders.' });
   }
 };
 
+// ── POST /api/auth/addresses ───────────────────────────────────
 export const addAddress = async (req, res) => {
   try {
+    // Whitelist and validate address fields — prevent mass assignment
+    const { label, address, city, zipCode, country, isDefault } = req.body;
+    if (!address || !city || !zipCode || !country) {
+      return res.status(400).json({ success: false, message: 'Address, city, zip code, and country are required' });
+    }
+
     const user = await User.findById(req.user.id);
-    user.shippingAddresses.push(req.body);
+    if (user.shippingAddresses.length >= 10) {
+      return res.status(400).json({ success: false, message: 'Maximum 10 addresses allowed' });
+    }
+
+    user.shippingAddresses.push({
+      label: String(label || 'Home').trim().slice(0, 30),
+      address: String(address).trim().slice(0, 200),
+      city: String(city).trim().slice(0, 100),
+      zipCode: String(zipCode).trim().slice(0, 20),
+      country: String(country).trim().slice(0, 100),
+      isDefault: Boolean(isDefault),
+    });
     await user.save();
     res.status(201).json({ success: true, user: user.toSafeObject() });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[addAddress]', error);
+    res.status(500).json({ success: false, message: 'Could not add address.' });
   }
 };
 
+// ── DELETE /api/auth/addresses/:id ────────────────────────────
 export const deleteAddress = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    user.shippingAddresses = user.shippingAddresses.filter((address) => String(address._id) !== req.params.id);
+    user.shippingAddresses = user.shippingAddresses.filter(
+      (addr) => String(addr._id) !== req.params.id
+    );
     await user.save();
     res.json({ success: true, user: user.toSafeObject() });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[deleteAddress]', error);
+    res.status(500).json({ success: false, message: 'Could not delete address.' });
   }
 };
 
+// ── GET /api/auth/cart ─────────────────────────────────────────
 export const getCart = async (req, res) => {
   res.json({ success: true, cart: req.user.cart || [] });
 };
 
+// ── PUT /api/auth/cart ─────────────────────────────────────────
 export const saveCart = async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
@@ -322,23 +412,28 @@ export const saveCart = async (req, res) => {
     );
     res.json({ success: true, cart: user.cart || [] });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[saveCart]', error);
+    res.status(500).json({ success: false, message: 'Could not save cart.' });
   }
 };
 
+// ── GET /api/auth/admin/users ──────────────────────────────────
 export const adminGetUsers = async (req, res) => {
   try {
     const { page = 1, limit = 50, search = '' } = req.query;
-    const query = search
-      ? {
-          $or: [
-            { firstName: new RegExp(search, 'i') },
-            { lastName: new RegExp(search, 'i') },
-            { email: new RegExp(search, 'i') },
-            { phone: new RegExp(search, 'i') },
-          ],
-        }
-      : {};
+
+    let query = {};
+    if (search) {
+      const safeSearch = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').slice(0, 100);
+      query = {
+        $or: [
+          { firstName: { $regex: safeSearch, $options: 'i' } },
+          { lastName: { $regex: safeSearch, $options: 'i' } },
+          { email: { $regex: safeSearch, $options: 'i' } },
+          { phone: { $regex: safeSearch, $options: 'i' } },
+        ],
+      };
+    }
 
     const users = await User.find(query)
       .sort({ createdAt: -1 })
@@ -355,26 +450,26 @@ export const adminGetUsers = async (req, res) => {
       currentPage: Number(page),
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[adminGetUsers]', error);
+    res.status(500).json({ success: false, message: 'Could not fetch users.' });
   }
 };
 
+// ── DELETE /api/auth/admin/users/:id ──────────────────────────
 export const adminDeleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
-
     if (!user) {
       return res.status(404).json({ success: false, message: 'Account not found' });
     }
-
     await Order.updateMany({ user: req.params.id }, { $unset: { user: '' } });
-
     res.json({
       success: true,
       message: 'Account deleted from database',
       deletedUserId: req.params.id,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('[adminDeleteUser]', error);
+    res.status(500).json({ success: false, message: 'Could not delete account.' });
   }
 };
