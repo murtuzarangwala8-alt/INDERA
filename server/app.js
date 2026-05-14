@@ -3,6 +3,10 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+
+// Load env vars FIRST — before any other imports that read process.env
+dotenv.config();
+
 import connectDB from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
 import oauthRoutes from './routes/oauthRoutes.js';
@@ -12,7 +16,6 @@ import contactRoutes from './routes/contactRoutes.js';
 import returnRoutes from './routes/returnRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import { stripeEnabled } from './config/stripe.js';
-dotenv.config();
 
 const app = express();
 
