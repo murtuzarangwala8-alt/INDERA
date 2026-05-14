@@ -22,7 +22,7 @@ export const getProductReviews = async (req, res) => {
 export const submitReview = async (req, res) => {
   try {
     const { productId } = req.params;
-    const { rating, title, body, authorName, authorEmail } = req.body;
+    const { rating, title, body, authorName, authorEmail, photos } = req.body;
 
     if (!rating || !body || !authorName) {
       return res.status(400).json({ success: false, message: 'Rating, name and review text are required' });
@@ -31,6 +31,9 @@ export const submitReview = async (req, res) => {
     if (rating < 1 || rating > 5) {
       return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
     }
+
+    // Validate photos — max 5, each must be a string
+    const reviewPhotos = Array.isArray(photos) ? photos.slice(0, 5).filter((p) => typeof p === 'string') : [];
 
     let userId;
     let verifiedPurchase = false;
@@ -69,6 +72,7 @@ export const submitReview = async (req, res) => {
       rating: Number(rating),
       title: title ? title.trim() : undefined,
       body: body.trim(),
+      photos: reviewPhotos,
       verifiedPurchase,
     });
 

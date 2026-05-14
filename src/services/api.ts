@@ -47,6 +47,7 @@ export const submitProductReview = async (productId: string, data: {
   body: string;
   authorName: string;
   authorEmail?: string;
+  photos?: string[];
 }) => {
   const res = await fetch(`${API_URL}/reviews/${productId}`, {
     method: 'POST',

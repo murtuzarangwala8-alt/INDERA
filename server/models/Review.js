@@ -38,6 +38,15 @@ const reviewSchema = new mongoose.Schema({
     trim: true,
     maxlength: 2000,
   },
+  // Customer-uploaded review photos (base64 data URIs or URLs, max 5)
+  photos: {
+    type: [String],
+    default: [],
+    validate: {
+      validator: (arr) => arr.length <= 5,
+      message: 'Maximum 5 photos per review',
+    },
+  },
   // Set to true if the user had a confirmed order containing this product
   verifiedPurchase: {
     type: Boolean,
