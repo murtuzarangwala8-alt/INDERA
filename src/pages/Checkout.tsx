@@ -50,9 +50,9 @@ const countryToStripeCode = (country: string) => {
 
 const buildOrderData = (formData: any, cart: any[]) => {
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal > 5 ? 0 : 0.50;
-  const tax = subtotal * 0.1;
-  const totalAmount = subtotal + shipping + tax;
+  const shipping = 0;
+  const tax = 0;
+  const totalAmount = subtotal;
 
   return {
     totalAmount,
@@ -368,7 +368,7 @@ const Checkout: React.FC = () => {
     return null;
   }
 
-  const total = cartTotal + (cartTotal > 5 ? 0 : 0.50) + cartTotal * 0.1;
+  const total = cartTotal;
 
   if (loading) {
     return (
@@ -495,11 +495,7 @@ const Checkout: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span>Shipping</span>
-                <span>{cartTotal > 5 ? 'FREE' : '$0.50'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tax</span>
-                <span>${(cartTotal * 0.1).toFixed(2)}</span>
+                <span>FREE</span>
               </div>
               <div className="flex justify-between text-xl font-bold pt-2">
                 <span>Total</span>

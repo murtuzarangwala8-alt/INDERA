@@ -62,9 +62,9 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    const calculatedShipping = calculatedSubtotal > 100 ? 0 : 9.99;
-    const calculatedTax = Math.round(calculatedSubtotal * 0.1 * 100) / 100;
-    const calculatedTotal = Math.round((calculatedSubtotal + calculatedShipping + calculatedTax) * 100) / 100;
+    const calculatedShipping = 0;
+    const calculatedTax = 0;
+    const calculatedTotal = Math.round(calculatedSubtotal * 100) / 100;
 
     // Optional: resolve authenticated user
     let userId;

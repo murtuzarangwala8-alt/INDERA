@@ -7,8 +7,8 @@ import { useCart } from '../context/CartContext';
 const Cart: React.FC = () => {
   const { cart, removeFromCart, updateQuantity, cartTotal } = useCart();
   const navigate = useNavigate();
-  const shipping = cartTotal > 300 ? 0 : 12;
-  const total = cartTotal + shipping;
+  const shipping = 0;
+  const total = cartTotal;
 
   if (cart.length === 0) {
     return (
@@ -84,12 +84,9 @@ const Cart: React.FC = () => {
                     <span>€{cartTotal.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-obsidian/60">
-                    <span>Shipping to Europe</span>
-                    <span>{shipping === 0 ? 'Free' : `€${shipping}`}</span>
+                    <span>Shipping</span>
+                    <span>Free</span>
                   </div>
-                  {shipping > 0 && (
-                    <p className="text-[10px] text-gold-500 tracking-wide">Free shipping on orders over €300</p>
-                  )}
                   <div className="border-t border-obsidian/8 pt-3 flex justify-between">
                     <span className="font-serif text-obsidian text-lg">Total</span>
                     <span className="font-serif text-obsidian text-xl">€{total.toLocaleString()}</span>

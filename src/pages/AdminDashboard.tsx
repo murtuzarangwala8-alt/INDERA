@@ -883,14 +883,7 @@ const AdminDashboard: React.FC = () => {
                       <span className="text-ivory/40">Subtotal</span>
                       <span className="text-ivory/70">EUR {order.pricing?.subtotal?.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-xs font-sans">
-                      <span className="text-ivory/40">Shipping</span>
-                      <span className="text-ivory/70">EUR {order.pricing?.shipping?.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-xs font-sans">
-                      <span className="text-ivory/40">Tax</span>
-                      <span className="text-ivory/70">EUR {order.pricing?.tax?.toFixed(2)}</span>
-                    </div>
+
                     <div className="border-t border-ivory/10 pt-2 mt-2 flex justify-between">
                       <span className="text-ivory/60 text-xs font-sans uppercase tracking-wider">Total</span>
                       <span className="text-gold-400 font-serif text-lg font-light">EUR {order.pricing?.total?.toFixed(2)}</span>

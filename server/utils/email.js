@@ -193,14 +193,7 @@ export const sendOrderConfirmation = async (order) => {
                     <td colspan="2" style="padding: 10px; text-align: right;">Subtotal:</td>
                     <td style="padding: 10px; text-align: right;">$${order.pricing.subtotal.toFixed(2)}</td>
                   </tr>
-                  <tr>
-                    <td colspan="2" style="padding: 10px; text-align: right;">Shipping:</td>
-                    <td style="padding: 10px; text-align: right;">$${order.pricing.shipping.toFixed(2)}</td>
-                  </tr>
-                  <tr>
-                    <td colspan="2" style="padding: 10px; text-align: right;">Tax:</td>
-                    <td style="padding: 10px; text-align: right;">$${order.pricing.tax.toFixed(2)}</td>
-                  </tr>
+
                   <tr class="total-row">
                     <td colspan="2" style="padding: 10px; text-align: right; border-top: 2px solid #DAA520;">Total:</td>
                     <td style="padding: 10px; text-align: right; border-top: 2px solid #DAA520;">$${order.pricing.total.toFixed(2)}</td>
