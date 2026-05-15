@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, MapPin, ShoppingBag, Shield, LogOut, Save, Trash2, Plus } from 'lucide-react';
 import { ShippingAddress, useAuth } from '../context/AuthContext';
@@ -171,6 +171,16 @@ const Account: React.FC = () => {
                               </div>
                             ))}
                           </div>
+                          {(order.status === 'delivered' || order.status === 'completed' || order.status === 'shipped') && (
+                            <div className="mt-4 pt-4 border-t border-obsidian/8 flex justify-end">
+                              <Link
+                                to={`/returns?order=${order.orderNumber}&email=${encodeURIComponent(user?.email || '')}&firstName=${encodeURIComponent(user?.firstName || '')}&lastName=${encodeURIComponent(user?.lastName || '')}`}
+                                className="text-xs uppercase tracking-widest font-sans border border-obsidian/20 px-4 py-2 text-obsidian hover:bg-obsidian hover:text-white transition-colors"
+                              >
+                                Request Exchange / Return
+                              </Link>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

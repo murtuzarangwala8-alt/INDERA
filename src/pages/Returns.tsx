@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, PackageCheck, RotateCcw, ShieldCheck, Send, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const Returns: React.FC = () => {
+  const location = useLocation();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -15,6 +16,17 @@ const Returns: React.FC = () => {
     description: '',
     resolution: 'refund',
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    setFormData(prev => ({
+      ...prev,
+      orderNumber: params.get('order') || prev.orderNumber,
+      email: params.get('email') || prev.email,
+      firstName: params.get('firstName') || prev.firstName,
+      lastName: params.get('lastName') || prev.lastName,
+    }));
+  }, [location]);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState<string | null>(null);
 
@@ -52,11 +64,11 @@ const Returns: React.FC = () => {
         <div className="max-w-5xl mx-auto">
           <p className="text-gold-400 uppercase tracking-[0.35em] text-xs mb-5">Customer Care</p>
           <h1 className="font-serif text-5xl md:text-7xl font-light tracking-wide mb-6">
-            Returns &amp; Refunds
+            Exchanges &amp; Returns
           </h1>
           <p className="text-ivory/60 text-lg md:text-xl font-light leading-relaxed max-w-3xl">
-            Returns are available for eligible INDERA pieces. If your product arrives damaged,
-            we offer a full 100% refund or a replacement after review.
+            Returns and exchanges are available for eligible INDERA pieces. If your product arrives damaged,
+            we offer a full refund or an exchange after review.
           </p>
         </div>
       </section>
@@ -73,12 +85,12 @@ const Returns: React.FC = () => {
             {
               icon: ShieldCheck,
               title: 'Damaged Product Protection',
-              body: 'If an item is damaged on arrival, we can offer a 100% refund or replacement once the issue is confirmed.',
+              body: 'If an item is damaged on arrival, we can offer a refund or exchange once the issue is confirmed.',
             },
             {
               icon: RotateCcw,
-              title: 'Replacement Option',
-              body: 'When stock is available, you may choose a replacement instead of a refund for damaged products.',
+              title: 'Exchange Option',
+              body: 'When stock is available, you may choose an exchange instead of a return for your items.',
             },
           ].map((item) => (
             <article key={item.title} className="border border-ivory/10 p-6 bg-ivory/[0.02]">
@@ -116,7 +128,7 @@ const Returns: React.FC = () => {
               <p className="text-ivory/60 leading-relaxed">
                 If your order arrives damaged, contact us as soon as possible with your order
                 number and clear photos of the item, packaging, and shipping label. Once verified,
-                INDERA can provide a 100% refund or arrange a replacement.
+                INDERA can provide a refund or arrange an exchange.
               </p>
             </div>
           </div>
@@ -125,7 +137,7 @@ const Returns: React.FC = () => {
             <h2 className="font-serif text-3xl mb-4">Need Help?</h2>
             <p className="text-ivory/60 leading-relaxed mb-6">
               Send us your order number and a short explanation. For damaged items, include photos
-              so we can process your refund or replacement faster.
+              so we can process your return or exchange faster.
             </p>
             <Link
               to="/contact"
@@ -142,10 +154,10 @@ const Returns: React.FC = () => {
       <section className="px-6 lg:px-8 pb-24 border-t border-ivory/10">
         <div className="max-w-3xl mx-auto pt-16">
           <p className="text-gold-400 uppercase tracking-[0.35em] text-xs mb-4">Submit a Request</p>
-          <h2 className="font-serif text-4xl font-light mb-2">Request a Return</h2>
+          <h2 className="font-serif text-4xl font-light mb-2">Request an Exchange or Return</h2>
           <p className="text-ivory/50 text-sm mb-10 leading-relaxed">
             Fill in the form below and our team will review your request within 2–3 business days.
-            You will receive a confirmation email with your return reference number.
+            You will receive a confirmation email with your reference number.
           </p>
 
           {submitted ? (
@@ -218,8 +230,8 @@ const Returns: React.FC = () => {
                     name="resolution" required value={formData.resolution} onChange={handleChange}
                     className="w-full bg-obsidian border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors"
                   >
-                    <option value="refund">A Full Refund</option>
-                    <option value="replacement">A Replacement</option>
+                    <option value="exchange">Exchange</option>
+                    <option value="refund">Return</option>
                   </select>
                 </div>
               </div>
@@ -241,7 +253,7 @@ const Returns: React.FC = () => {
                 {submitting ? (
                   <><Loader size={16} className="animate-spin" /> Submitting...</>
                 ) : (
-                  <><Send size={16} /> Submit Return Request</>
+                  <><Send size={16} /> Submit Request</>
                 )}
               </button>
             </form>

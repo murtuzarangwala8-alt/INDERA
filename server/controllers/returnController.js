@@ -16,8 +16,8 @@ export const submitReturnRequest = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid return reason.' });
     }
 
-    if (!['refund', 'replacement'].includes(resolution)) {
-      return res.status(400).json({ success: false, message: 'Resolution must be refund or replacement.' });
+    if (!['refund', 'replacement', 'exchange'].includes(resolution)) {
+      return res.status(400).json({ success: false, message: 'Resolution must be refund, replacement, or exchange.' });
     }
 
     // Check for duplicate return request for same order

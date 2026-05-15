@@ -14,7 +14,7 @@ const returnRequestSchema = new mongoose.Schema({
   resolution:  {
     type: String,
     required: true,
-    enum: ['refund', 'replacement'],
+    enum: ['refund', 'replacement', 'exchange'],
   },
   status: {
     type: String,
