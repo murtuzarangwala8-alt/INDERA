@@ -10,7 +10,7 @@ export const ForgotPassword: React.FC = () => {
   const navigate = useNavigate();
   
   const [step, setStep] = useState<'email' | 'otp'>('email');
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -20,7 +20,7 @@ export const ForgotPassword: React.FC = () => {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const res = await forgotPassword(email);
+    const res = await forgotPassword(identifier);
     setLoading(false);
     if (res.success) {
       setStep('otp');
@@ -40,7 +40,7 @@ export const ForgotPassword: React.FC = () => {
     if (password.length < 8) { toast.error('Password must be at least 8 characters'); return; }
     
     setLoading(true);
-    const res = await resetPassword(email, otp, password);
+    const res = await resetPassword(identifier, otp, password);
     setLoading(false);
     if (res.success) {
       toast.success('Password reset successfully');
@@ -67,11 +67,11 @@ export const ForgotPassword: React.FC = () => {
           {step === 'email' ? (
             <>
               <h2 className="font-serif text-ivory text-2xl font-light mb-1">Reset Password</h2>
-              <p className="text-ivory/40 text-xs font-sans mb-8">Enter your email and we'll text you an OTP code to your registered phone.</p>
+              <p className="text-ivory/40 text-xs font-sans mb-8">Enter your email or phone number and we'll text you an OTP code.</p>
               <form onSubmit={handleSendOtp}>
                 <div className="mb-7">
-                  <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Email Address</label>
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@example.com"
+                  <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Email Address or Phone Number</label>
+                  <input type="text" value={identifier} onChange={(e) => setIdentifier(e.target.value)} required placeholder="you@example.com or +1234567890"
                     className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors" />
                 </div>
                 <button type="submit" disabled={loading} className="btn-gold w-full py-4 flex items-center justify-center gap-2 disabled:opacity-50">

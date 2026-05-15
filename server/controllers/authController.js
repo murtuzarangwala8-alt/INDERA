@@ -242,13 +242,18 @@ export const getMe = async (req, res) => {
 // ── POST /api/auth/forgot-password ────────────────────────────
 export const forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+    const { identifier } = req.body;
+    if (!identifier) return res.status(400).json({ success: false, message: 'Email or phone number is required' });
 
-    const user = await User.findOne({ email: email.toLowerCase() });
-    // Always return success to prevent email enumeration
+    // Look up user by email or phone (ignoring spaces/formatting for phone)
+    const query = identifier.includes('@')
+      ? { email: identifier.toLowerCase().trim() }
+      : { phone: { $regex: new RegExp(identifier.replace(/\s+/g, '').replace('+', '\\+')), $options: 'i' } };
+
+    const user = await User.findOne(query);
+    // Always return success to prevent user enumeration
     if (!user) {
-      return res.json({ success: true, message: 'If that email exists, an OTP has been sent.' });
+      return res.json({ success: true, message: 'If that account exists, an OTP has been sent.' });
     }
 
     const otp = generateOtp();
@@ -272,7 +277,7 @@ export const forgotPassword = async (req, res) => {
     res.json({
       success: true,
       message: smsSent
-        ? 'If that email exists, an OTP has been sent via SMS.'
+        ? 'If that account exists, an OTP has been sent via SMS.'
         : 'OTP generated but SMS delivery failed. Check server logs.',
       smsSent,
     });
@@ -285,17 +290,21 @@ export const forgotPassword = async (req, res) => {
 // ── POST /api/auth/reset-password ─────────────────────────────
 export const resetPassword = async (req, res) => {
   try {
-    const { email, otp, password } = req.body;
-    if (!email || !otp || !password) {
-      return res.status(400).json({ success: false, message: 'Email, OTP, and new password are required' });
+    const { identifier, otp, password } = req.body;
+    if (!identifier || !otp || !password) {
+      return res.status(400).json({ success: false, message: 'Account identifier, OTP, and new password are required' });
     }
     if (password.length < 8) {
       return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
     }
 
     const hashed = crypto.createHash('sha256').update(otp).digest('hex');
+    const query = identifier.includes('@')
+      ? { email: identifier.toLowerCase().trim() }
+      : { phone: { $regex: new RegExp(identifier.replace(/\s+/g, '').replace('+', '\\+')), $options: 'i' } };
+
     const user = await User.findOne({
-      email: email.toLowerCase(),
+      ...query,
       passwordResetToken: hashed,
       passwordResetExpiry: { $gt: new Date() },
     });

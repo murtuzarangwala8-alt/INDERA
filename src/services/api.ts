@@ -224,3 +224,20 @@ export const adminToggleReviewApproval = async (id: string) => {
   });
   return res.json();
 };
+
+// ── Admin Returns ──────────────────────────────────────────────
+
+export const adminFetchReturns = async (params: Record<string, string> = {}) => {
+  const qs = new URLSearchParams(params).toString();
+  const res = await fetch(`${API_URL}/returns${qs ? `?${qs}` : ''}`, { headers: adminHeaders() });
+  return res.json();
+};
+
+export const adminUpdateReturnStatus = async (id: string, status: string) => {
+  const res = await fetch(`${API_URL}/returns/${id}`, {
+    method: 'PATCH',
+    headers: adminHeaders(),
+    body: JSON.stringify({ status }),
+  });
+  return res.json();
+};

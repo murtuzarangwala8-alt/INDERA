@@ -16,12 +16,14 @@ import {
   adminFetchOrders,
   adminFetchProducts,
   adminFetchReviews,
+  adminFetchReturns,
   adminFetchUsers,
   adminLogin,
   adminSeedProducts,
   adminToggleReviewApproval,
   adminUpdateOrderStatus,
   adminUpdateProduct,
+  adminUpdateReturnStatus,
   adminUpdateStock,
   adminUpdateVisibility,
   fetchCategories,
@@ -63,6 +65,7 @@ const AdminDashboard: React.FC = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [allReviews, setAllReviews] = useState<any[]>([]);
+  const [returns, setReturns] = useState<any[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [showAddReview, setShowAddReview] = useState(false);
   const [reviewForm, setReviewForm] = useState({
@@ -93,12 +96,13 @@ const AdminDashboard: React.FC = () => {
   const loadAdminData = async () => {
     setLoading(true);
     try {
-      const [productsResult, ordersResult, usersResult, categoriesResult, reviewsResult] = await Promise.allSettled([
+      const [productsResult, ordersResult, usersResult, categoriesResult, reviewsResult, returnsResult] = await Promise.allSettled([
         adminFetchProducts({ limit: '100' }),
         adminFetchOrders({ limit: '25' }),
         adminFetchUsers({ limit: '50' }),
         fetchCategories(),
         adminFetchReviews(),
+        adminFetchReturns(),
       ]);
 
       if (productsResult.status === 'fulfilled') {
@@ -129,10 +133,24 @@ const AdminDashboard: React.FC = () => {
       if (reviewsResult.status === 'fulfilled') {
         if (reviewsResult.value.success) setAllReviews(reviewsResult.value.reviews || []);
       }
+
+      if (returnsResult.status === 'fulfilled') {
+        if (returnsResult.value.success) setReturns(returnsResult.value.requests || []);
+      }
     } catch (error: any) {
       toast.error(`Admin API error: ${error?.message || 'Could not connect'}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReturnStatus = async (id: string, status: string) => {
+    const res = await adminUpdateReturnStatus(id, status);
+    if (res.success) {
+      toast.success('Return status updated');
+      await loadAdminData();
+    } else {
+      toast.error(res.message || 'Could not update return status');
     }
   };
 
@@ -905,6 +923,61 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* ── Returns Management ─────────────────────────────── */}
+        <h2 className="font-serif text-ivory text-3xl font-light mb-4 mt-10">Return Requests</h2>
+        <div className="glass-dark rounded-sm overflow-hidden mb-10" style={{ border: '1px solid rgba(201,168,76,0.1)' }}>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-ivory/5">
+                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Order / Date</th>
+                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Customer</th>
+                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Reason / Resolution</th>
+                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Status</th>
+                  <th className="text-left px-5 py-4 text-[10px] tracking-widest uppercase font-sans text-ivory/30">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {returns.map((ret) => (
+                  <tr key={ret._id} className="border-b border-ivory/5">
+                    <td className="px-5 py-4">
+                      <p className="text-ivory font-sans text-sm font-medium uppercase tracking-wider">{ret.orderNumber}</p>
+                      <p className="text-ivory/40 text-[10px] font-sans mt-0.5">{new Date(ret.createdAt).toLocaleString()}</p>
+                    </td>
+                    <td className="px-5 py-4">
+                      <p className="text-ivory font-sans text-sm">{ret.firstName} {ret.lastName}</p>
+                      <p className="text-ivory/40 text-[10px] font-sans">{ret.email}</p>
+                    </td>
+                    <td className="px-5 py-4">
+                      <p className="text-ivory/70 text-xs font-sans font-medium capitalize">{ret.reason.replace(/_/g, ' ')}</p>
+                      <p className="text-gold-400 text-[10px] font-sans mt-0.5 uppercase tracking-wider">{ret.resolution}</p>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className={`text-[9px] tracking-widest uppercase font-sans px-3 py-1.5 border ${
+                        ret.status === 'completed' || ret.status === 'approved' ? 'border-green-400/30 text-green-400' :
+                        ret.status === 'rejected' ? 'border-terracotta/30 text-terracotta' :
+                        'border-gold-400/30 text-gold-400'
+                      }`}>{ret.status.replace(/_/g, ' ')}</span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <select
+                        value={ret.status}
+                        onChange={(e) => handleReturnStatus(ret._id, e.target.value)}
+                        className="bg-obsidian border border-ivory/10 text-ivory/70 px-3 py-2 text-[10px] uppercase font-sans"
+                      >
+                        {['pending', 'under_review', 'approved', 'rejected', 'completed'].map((s) => (
+                          <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {returns.length === 0 && <p className="text-ivory/30 text-center py-10 font-serif text-xl">No return requests</p>}
         </div>
       </div>
 

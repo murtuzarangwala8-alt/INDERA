@@ -35,8 +35,8 @@ interface AuthContextType {
   resendOtp: (userId: string, type: 'email' | 'phone') => Promise<{ success: boolean; message?: string; otp?: string }>;
   login: (email: string, password: string) => Promise<{ success: boolean; userId?: string; nextStep?: string; message?: string; phoneOtp?: string }>;
   logout: () => void;
-  forgotPassword: (email: string) => Promise<{ success: boolean; message?: string; smsSent?: boolean }>;
-  resetPassword: (email: string, otp: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  forgotPassword: (identifier: string) => Promise<{ success: boolean; message?: string; smsSent?: boolean }>;
+  resetPassword: (identifier: string, otp: string, password: string) => Promise<{ success: boolean; message?: string }>;
   updateProfile: (data: Partial<AuthUser>) => Promise<{ success: boolean; user?: AuthUser; message?: string }>;
   addAddress: (data: ShippingAddress) => Promise<{ success: boolean; user?: AuthUser; message?: string }>;
   deleteAddress: (id: string) => Promise<{ success: boolean; user?: AuthUser; message?: string }>;
@@ -148,20 +148,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.success('Signed out');
   };
 
-  const forgotPassword = async (email: string) => {
+  const forgotPassword = async (identifier: string) => {
     const res = await fetch(`${API}/auth/forgot-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ identifier }),
     });
     return res.json();
   };
 
-  const resetPassword = async (email: string, otp: string, password: string) => {
+  const resetPassword = async (identifier: string, otp: string, password: string) => {
     const res = await fetch(`${API}/auth/reset-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp, password }),
+      body: JSON.stringify({ identifier, otp, password }),
     });
     const json = await res.json();
     if (json.success && json.token) {

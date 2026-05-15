@@ -17,14 +17,14 @@ import {
   adminDeleteUser,
 } from '../controllers/authController.js';
 import { adminAuth, protect } from '../middleware/auth.js';
-import { authLimiter, otpLimiter } from '../middleware/rateLimits.js';
+import { authLimiter, otpLimiter, forgotPasswordLimiter } from '../middleware/rateLimits.js';
 
 const router = express.Router();
 
 // ── Public (rate-limited) ──────────────────────────────────────
 router.post('/register',        authLimiter, register);
 router.post('/login',           authLimiter, login);
-router.post('/forgot-password', authLimiter, forgotPassword);
+router.post('/forgot-password', forgotPasswordLimiter, forgotPassword);
 router.post('/reset-password',  authLimiter, resetPassword);
 router.post('/verify-phone',    otpLimiter,  verifyPhone);
 router.post('/resend-otp',      otpLimiter,  resendOtp);
