@@ -30,13 +30,13 @@ interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
   loading: boolean;
-  register: (data: RegisterData) => Promise<{ success: boolean; userId?: string; message?: string; phoneOtp?: string; whatsappSent?: boolean; nextStep?: string }>;
+  register: (data: RegisterData) => Promise<{ success: boolean; userId?: string; message?: string; phoneOtp?: string; smsSent?: boolean; nextStep?: string }>;
   verifyPhone: (userId: string, otp: string) => Promise<{ success: boolean; token?: string; message?: string }>;
   resendOtp: (userId: string, type: 'email' | 'phone') => Promise<{ success: boolean; message?: string; otp?: string }>;
   login: (email: string, password: string) => Promise<{ success: boolean; userId?: string; nextStep?: string; message?: string; phoneOtp?: string }>;
   logout: () => void;
-  forgotPassword: (email: string) => Promise<{ success: boolean; message?: string; resetUrl?: string; emailSent?: boolean }>;
-  resetPassword: (token: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  forgotPassword: (email: string) => Promise<{ success: boolean; message?: string; smsSent?: boolean }>;
+  resetPassword: (email: string, otp: string, password: string) => Promise<{ success: boolean; message?: string }>;
   updateProfile: (data: Partial<AuthUser>) => Promise<{ success: boolean; user?: AuthUser; message?: string }>;
   addAddress: (data: ShippingAddress) => Promise<{ success: boolean; user?: AuthUser; message?: string }>;
   deleteAddress: (id: string) => Promise<{ success: boolean; user?: AuthUser; message?: string }>;
@@ -157,11 +157,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return res.json();
   };
 
-  const resetPassword = async (resetToken: string, password: string) => {
+  const resetPassword = async (email: string, otp: string, password: string) => {
     const res = await fetch(`${API}/auth/reset-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: resetToken, password }),
+      body: JSON.stringify({ email, otp, password }),
     });
     const json = await res.json();
     if (json.success && json.token) {

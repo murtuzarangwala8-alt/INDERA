@@ -5,7 +5,7 @@ import { sendWelcomeEmail, sendPasswordResetEmail } from '../utils/email.js';
 import { sendSmsOtp } from '../utils/sms.js';
 import crypto from 'crypto';
 
-const phoneVerificationRequired = () => process.env.REQUIRE_WHATSAPP_OTP !== 'false';
+const phoneVerificationRequired = () => process.env.REQUIRE_SMS_OTP !== 'false';
 const firstDeliveryError = (delivery) => delivery.find((item) => item.status === 'rejected')?.reason?.message;
 
 // ── POST /api/auth/register ────────────────────────────────────
@@ -57,7 +57,7 @@ export const register = async (req, res) => {
     const delivery = requirePhoneOtp
       ? await Promise.allSettled([sendSmsOtp(phone, phoneOtp)])
       : [];
-    const whatsappError = firstDeliveryError(delivery);
+    const smsError = firstDeliveryError(delivery);
 
     // Log OTP to server console only in non-production (never send in response)
     if (process.env.NODE_ENV !== 'production' && requirePhoneOtp) {
@@ -66,13 +66,13 @@ export const register = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: whatsappError
-        ? `Account created, but SMS code could not be sent: ${whatsappError}`
+      message: smsError
+        ? `Account created, but SMS code could not be sent: ${smsError}`
         : 'Account created. Please verify your phone number.',
       userId: user._id,
       nextStep: requirePhoneOtp ? 'verify-phone' : 'complete',
-      whatsappVerificationRequired: requirePhoneOtp,
-      whatsappSent: !whatsappError,
+      smsVerificationRequired: requirePhoneOtp,
+      smsSent: !smsError,
       delivery: delivery.map((item) => item.status),
       // phoneOtp intentionally omitted — never expose OTP in API response
     });
@@ -155,15 +155,15 @@ export const resendOtp = async (req, res) => {
     await user.save();
 
     const delivery = await Promise.allSettled([sendSmsOtp(user.phone, otp)]);
-    const whatsappError = firstDeliveryError(delivery);
+    const smsError = firstDeliveryError(delivery);
 
     // Log OTP to server console only in non-production
     if (process.env.NODE_ENV !== 'production') {
       console.log(`[DEV] Resent OTP for ${user.phone}: ${otp}`);
     }
 
-    if (whatsappError) {
-      return res.status(502).json({ success: false, message: `SMS code could not be sent: ${whatsappError}` });
+    if (smsError) {
+      return res.status(502).json({ success: false, message: `SMS code could not be sent: ${smsError}` });
     }
 
     return res.json({
@@ -248,31 +248,33 @@ export const forgotPassword = async (req, res) => {
     const user = await User.findOne({ email: email.toLowerCase() });
     // Always return success to prevent email enumeration
     if (!user) {
-      return res.json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+      return res.json({ success: true, message: 'If that email exists, an OTP has been sent.' });
     }
 
-    const token = generateResetToken();
-    user.passwordResetToken = crypto.createHash('sha256').update(token).digest('hex');
-    user.passwordResetExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const otp = generateOtp();
+    user.passwordResetToken = crypto.createHash('sha256').update(otp).digest('hex');
+    user.passwordResetExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
     await user.save();
 
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
-    let emailSent = true;
+    let smsSent = true;
     try {
-      await sendPasswordResetEmail(user.email, user.firstName, resetUrl);
-    } catch (emailError) {
-      emailSent = false;
-      // Log the reset URL server-side only — never expose in API response
-      console.warn(`[forgotPassword] Email failed for ${user.email}. Reset URL: ${resetUrl}`);
+      await sendSmsOtp(user.phone, otp);
+    } catch (smsError) {
+      smsSent = false;
+      console.warn(`[forgotPassword] SMS failed for ${user.email}. OTP: ${otp}`);
+    }
+
+    // Log OTP to server console only in non-production
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[DEV] Forgot Password OTP for ${user.phone}: ${otp}`);
     }
 
     res.json({
       success: true,
-      message: emailSent
-        ? 'If that email exists, a reset link has been sent.'
-        : 'Reset link generated but email delivery failed. Check server logs.',
-      emailSent,
-      // resetUrl intentionally omitted — never expose reset tokens in API response
+      message: smsSent
+        ? 'If that email exists, an OTP has been sent via SMS.'
+        : 'OTP generated but SMS delivery failed. Check server logs.',
+      smsSent,
     });
   } catch (error) {
     console.error('[forgotPassword]', error);
@@ -283,22 +285,23 @@ export const forgotPassword = async (req, res) => {
 // ── POST /api/auth/reset-password ─────────────────────────────
 export const resetPassword = async (req, res) => {
   try {
-    const { token, password } = req.body;
-    if (!token || !password) {
-      return res.status(400).json({ success: false, message: 'Token and password are required' });
+    const { email, otp, password } = req.body;
+    if (!email || !otp || !password) {
+      return res.status(400).json({ success: false, message: 'Email, OTP, and new password are required' });
     }
     if (password.length < 8) {
       return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
     }
 
-    const hashed = crypto.createHash('sha256').update(token).digest('hex');
+    const hashed = crypto.createHash('sha256').update(otp).digest('hex');
     const user = await User.findOne({
+      email: email.toLowerCase(),
       passwordResetToken: hashed,
       passwordResetExpiry: { $gt: new Date() },
     });
 
     if (!user) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired reset token' });
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
     }
 
     user.password = password;

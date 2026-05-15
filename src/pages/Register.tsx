@@ -46,7 +46,7 @@ const Register: React.FC = () => {
     if (res.success) {
       setUserId(res.userId!);
       setStep('verify-phone');
-      if (res.whatsappSent === false) toast.error(res.message || 'Account created, but SMS code could not be sent');
+      if (res.smsSent === false) toast.error(res.message || 'Account created, but SMS code could not be sent');
       else toast.success('Check SMS for your verification code');
     } else {
       toast.error(res.message || 'Registration failed');
