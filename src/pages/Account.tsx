@@ -3,6 +3,7 @@ import { Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { User, MapPin, ShoppingBag, Shield, LogOut, Save, Trash2, Plus } from 'lucide-react';
 import { ShippingAddress, useAuth } from '../context/AuthContext';
+import { cancelMyOrder } from '../services/api';
 import toast from 'react-hot-toast';
 
 const tabs = [
@@ -81,6 +82,26 @@ const Account: React.FC = () => {
     const response = await forgotPassword(user.email);
     if (response.success) toast.success('Password reset email sent');
     else toast.error(response.message || 'Could not send reset email');
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    if (!window.confirm('Are you sure you want to cancel this order?')) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
+    try {
+      const response = await cancelMyOrder(orderId, token);
+      if (response.success) {
+        toast.success('Order cancelled successfully');
+        // Refresh orders
+        const data = await fetchOrders();
+        if (data.success) setOrders((data.orders as any[]) || []);
+      } else {
+        toast.error(response.message || 'Could not cancel order');
+      }
+    } catch (error) {
+      toast.error('An error occurred. Please try again.');
+    }
   };
 
   return (
@@ -171,16 +192,29 @@ const Account: React.FC = () => {
                               </div>
                             ))}
                           </div>
-                          {(order.status === 'delivered' || order.status === 'completed' || order.status === 'shipped') && (
-                            <div className="mt-4 pt-4 border-t border-obsidian/8 flex justify-end">
+                          <div className="mt-4 pt-4 border-t border-obsidian/8 flex justify-end gap-3 items-center">
+                            {order.status === 'cancelling' && (
+                              <span className="text-xs uppercase tracking-widest font-sans text-terracotta">
+                                Cancellation Requested
+                              </span>
+                            )}
+                            {(order.status === 'pending' || order.status === 'processing') && (
+                              <button
+                                onClick={() => handleCancelOrder(order._id)}
+                                className="text-xs uppercase tracking-widest font-sans border border-terracotta/30 text-terracotta px-4 py-2 hover:bg-terracotta hover:text-white transition-colors"
+                              >
+                                Cancel Order
+                              </button>
+                            )}
+                            {(order.status === 'delivered' || order.status === 'completed' || order.status === 'shipped') && (
                               <Link
                                 to={`/returns?order=${order.orderNumber}&email=${encodeURIComponent(user?.email || '')}&firstName=${encodeURIComponent(user?.firstName || '')}&lastName=${encodeURIComponent(user?.lastName || '')}`}
                                 className="text-xs uppercase tracking-widest font-sans border border-obsidian/20 px-4 py-2 text-obsidian hover:bg-obsidian hover:text-white transition-colors"
                               >
                                 Request Exchange / Return
                               </Link>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>

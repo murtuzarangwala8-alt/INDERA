@@ -9,6 +9,7 @@ import {
   getOrderByNumber,
   updateOrderStatus,
   getOrderStats,
+  cancelMyOrder,
 } from '../controllers/orderController.js';
 import { adminAuth } from '../middleware/auth.js';
 
@@ -20,6 +21,7 @@ router.post('/payment/create-intent', createPaymentIntent);
 router.post('/payment/confirm', confirmPayment);
 router.get('/orders/number/:orderNumber', getOrderByNumber);
 router.get('/orders/my', getMyOrders);
+router.post('/orders/my/:id/cancel', cancelMyOrder);
 
 // Admin routes
 router.get('/orders', adminAuth, getAllOrders);

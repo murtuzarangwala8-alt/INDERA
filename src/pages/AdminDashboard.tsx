@@ -30,7 +30,7 @@ import {
 } from '../services/api';
 
 const FALLBACK_CATEGORIES = ['Minimal Jhumkas', 'Pearl Fusion', 'Indo-European Necklaces', 'Modern Kundan', 'Festival Sets', 'Accessories'];
-const ORDER_STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+const ORDER_STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelling', 'cancelled'];
 
 const emptyForm = {
   name: '',

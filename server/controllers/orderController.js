@@ -360,7 +360,7 @@ export const updateOrderStatus = async (req, res) => {
   try {
     const { status, trackingNumber } = req.body;
 
-    const allowedStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+    const allowedStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelling', 'cancelled'];
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status value' });
     }
@@ -441,5 +441,37 @@ export const getMyOrders = async (req, res) => {
   } catch (error) {
     console.error('[getMyOrders]', error);
     res.status(500).json({ success: false, message: 'Failed to fetch your orders.' });
+  }
+};
+
+// ── POST /api/orders/my/:id/cancel (authenticated customer) ────────
+export const cancelMyOrder = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+    let userId;
+    try {
+      const decoded = verifyToken(authHeader.split(' ')[1]);
+      userId = decoded.id;
+    } catch {
+      return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+    }
+
+    const order = await Order.findOne({ _id: req.params.id, user: userId });
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    if (order.status === 'shipped' || order.status === 'delivered' || order.status === 'completed' || order.status === 'cancelled' || order.status === 'cancelling') {
+      return res.status(400).json({ success: false, message: 'Order cannot be cancelled at this stage.' });
+    }
+
+    order.status = 'cancelling';
+    await order.save();
+
+    res.status(200).json({ success: true, message: 'Cancellation requested successfully', order });
+  } catch (error) {
+    console.error('[cancelMyOrder]', error);
+    res.status(500).json({ success: false, message: 'Failed to cancel order.' });
   }
 };
