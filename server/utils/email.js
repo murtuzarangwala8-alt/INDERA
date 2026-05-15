@@ -360,6 +360,46 @@ export const sendReturnRequestEmail = async ({ firstName, email, orderNumber, re
   });
 };
 
+export const sendCancellationRequestEmail = async (order) => {
+  const targetEmail = 'murtuzarangwala8@gmail.com';
+  
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: targetEmail,
+    subject: `[CANCELLATION REQUEST] Order ${order.orderNumber}`,
+    html: `
+      <!DOCTYPE html><html><body style="font-family:'DM Sans',Arial,sans-serif;background:#FAF7F2;margin:0;padding:0">
+      <div style="max-width:520px;margin:40px auto;background:#fff;border:1px solid rgba(201,168,76,0.2)">
+        <div style="background:#0D0D0D;padding:28px;text-align:center">
+          <h1 style="margin:0;font-family:Georgia,serif;color:#C9A84C;font-weight:300;letter-spacing:0.2em">INDÉRA</h1>
+          <p style="margin:8px 0 0;color:rgba(250,247,242,0.5);font-size:11px;letter-spacing:0.3em;text-transform:uppercase">Order Cancellation Request</p>
+        </div>
+        <div style="padding:36px">
+          <p style="color:#0D0D0D;font-size:15px">A customer has requested to cancel their order.</p>
+          <table style="width:100%;border-collapse:collapse;margin-top:20px;">
+            <tr><td style="padding:8px 0;font-size:12px;color:rgba(13,13,13,0.45);text-transform:uppercase;letter-spacing:0.1em;width:120px">Order Number</td><td style="padding:8px 0;font-size:14px;color:#0D0D0D">${esc(order.orderNumber)}</td></tr>
+            <tr><td style="padding:8px 0;font-size:12px;color:rgba(13,13,13,0.45);text-transform:uppercase;letter-spacing:0.1em">Customer</td><td style="padding:8px 0;font-size:14px;color:#0D0D0D">${esc(order.customer.firstName)} ${esc(order.customer.lastName)}</td></tr>
+            <tr><td style="padding:8px 0;font-size:12px;color:rgba(13,13,13,0.45);text-transform:uppercase;letter-spacing:0.1em">Email</td><td style="padding:8px 0;font-size:14px;color:#0D0D0D"><a href="mailto:${esc(order.customer.email)}" style="color:#C9A84C">${esc(order.customer.email)}</a></td></tr>
+            <tr><td style="padding:8px 0;font-size:12px;color:rgba(13,13,13,0.45);text-transform:uppercase;letter-spacing:0.1em">Total Amount</td><td style="padding:8px 0;font-size:14px;color:#0D0D0D">$${order.pricing.total.toFixed(2)}</td></tr>
+          </table>
+          <p style="color:rgba(13,13,13,0.6);font-size:14px;line-height:1.7;margin-top:24px;">Please review this order in the Admin Dashboard and change the status to "cancelled" to officially cancel it, or contact the customer if it has already shipped.</p>
+        </div>
+        <div style="border-top:1px solid rgba(201,168,76,0.1);padding:16px;text-align:center">
+          <p style="color:rgba(13,13,13,0.3);font-size:11px;margin:0">&copy; 2024 INDÉRA. Admin Notification.</p>
+        </div>
+      </div>
+      </body></html>
+    `,
+  };
+
+  try {
+    await getTransporter().sendMail(mailOptions);
+    console.log(`✅ Cancellation request email sent to ${targetEmail} for order ${order.orderNumber}`);
+  } catch (error) {
+    console.error('❌ Cancellation email failed:', error.message);
+  }
+};
+
 export default getTransporter;
 
 

@@ -2,7 +2,7 @@ import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
 import stripe, { stripeEnabled } from '../config/stripe.js';
-import { sendOrderConfirmation } from '../utils/email.js';
+import { sendOrderConfirmation, sendCancellationRequestEmail } from '../utils/email.js';
 import { verifyToken } from '../utils/auth.js';
 
 const toMoney = (value) => {
@@ -468,6 +468,13 @@ export const cancelMyOrder = async (req, res) => {
 
     order.status = 'cancelling';
     await order.save();
+
+    // Trigger the email notification to admin
+    try {
+      await sendCancellationRequestEmail(order);
+    } catch (emailError) {
+      console.warn('[cancelMyOrder] Failed to send cancellation email:', emailError.message);
+    }
 
     res.status(200).json({ success: true, message: 'Cancellation requested successfully', order });
   } catch (error) {

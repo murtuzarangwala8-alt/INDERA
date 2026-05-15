@@ -829,7 +829,7 @@ const AdminDashboard: React.FC = () => {
                   </div>
                   <span className={`text-[9px] tracking-widest uppercase font-sans px-3 py-1.5 border ${
                     order.status === 'delivered' ? 'border-green-400/30 text-green-400' :
-                    order.status === 'cancelled' ? 'border-terracotta/30 text-terracotta' :
+                    (order.status === 'cancelled' || order.status === 'cancelling') ? 'border-terracotta/30 text-terracotta' :
                     order.status === 'shipped' ? 'border-blue-400/30 text-blue-400' :
                     'border-gold-400/30 text-gold-400'
                   }`}>{order.status}</span>
