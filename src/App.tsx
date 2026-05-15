@@ -19,6 +19,7 @@ import Account from './pages/Account';
 import AdminDashboard from './pages/AdminDashboard';
 import Returns from './pages/Returns';
 import OrderConfirmation from './pages/OrderConfirmation';
+import PWAPrompt from './components/PWAPrompt';
 
 // Auth pages use full-screen dark layout — no Navbar/Footer
 const AuthLayout = ({ children }: { children: React.ReactNode }) => <>{children}</>;
@@ -73,6 +74,7 @@ function App() {
               },
             }}
           />
+          <PWAPrompt />
         </Router>
       </CartProvider>
     </AuthProvider>

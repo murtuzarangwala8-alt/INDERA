@@ -28,6 +28,7 @@ export default {
       animation: {
         'float': 'float 6s ease-in-out infinite',
         'shimmer': 'shimmer 2.5s linear infinite',
+        'slide-up': 'slideUp 0.4s ease-out forwards',
       },
       keyframes: {
         float: {
@@ -37,6 +38,10 @@ export default {
         shimmer: {
           '0%': { backgroundPosition: '-200% center' },
           '100%': { backgroundPosition: '200% center' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(100%)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
         },
       },
     },
