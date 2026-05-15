@@ -7,7 +7,6 @@ import { useCart } from '../context/CartContext';
 const Cart: React.FC = () => {
   const { cart, removeFromCart, updateQuantity, cartTotal } = useCart();
   const navigate = useNavigate();
-  const shipping = 0;
   const total = cartTotal;
 
   if (cart.length === 0) {
