@@ -46,8 +46,8 @@ const Register: React.FC = () => {
     if (res.success) {
       setUserId(res.userId!);
       setStep('verify-phone');
-      if (res.whatsappSent === false) toast.error(res.message || 'Account created, but WhatsApp code could not be sent');
-      else toast.success('Check WhatsApp for your verification code');
+      if (res.whatsappSent === false) toast.error(res.message || 'Account created, but SMS code could not be sent');
+      else toast.success('Check SMS for your verification code');
     } else {
       toast.error(res.message || 'Registration failed');
     }
@@ -75,7 +75,7 @@ const Register: React.FC = () => {
     setResending(true);
     const res = await resendOtp(userId, 'phone');
     setResending(false);
-    if (res.success) toast.success(res.message || 'New WhatsApp code sent');
+    if (res.success) toast.success(res.message || 'New SMS code sent');
     else toast.error(res.message || 'Failed to resend');
   };
 
@@ -102,7 +102,7 @@ const Register: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-center gap-3 mb-8">
-          {['Account', 'WhatsApp'].map((label, i) => (
+          {['Account', 'SMS Verification'].map((label, i) => (
             <React.Fragment key={label}>
               <div className="flex flex-col items-center gap-1">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-sans transition-all duration-300 ${
@@ -147,7 +147,7 @@ const Register: React.FC = () => {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">WhatsApp Number</label>
+                  <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Phone Number</label>
                   <input type="tel" value={form.phone} onChange={set('phone')} required placeholder="+39 333 123 4567" className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors" />
                   <p className="text-ivory/20 text-[10px] font-sans mt-1">Include country code, for example +39 for Italy.</p>
                 </div>
@@ -175,12 +175,12 @@ const Register: React.FC = () => {
 
             {step === 'verify-phone' && (
               <motion.form key="verify-phone" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleVerifyPhone}>
-                <h2 className="font-serif text-ivory text-2xl font-light mb-1">Verify WhatsApp</h2>
-                <p className="text-ivory/40 text-xs font-sans mb-2">We sent a 6-digit WhatsApp code to</p>
+                <h2 className="font-serif text-ivory text-2xl font-light mb-1">Verify Phone</h2>
+                <p className="text-ivory/40 text-xs font-sans mb-2">We sent a 6-digit SMS code to</p>
                 <p className="text-gold-400 text-sm font-sans mb-7">{form.phone}</p>
 
                 <div className="mb-7">
-                  <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">WhatsApp Code</label>
+                  <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">SMS Code</label>
                   <input value={phoneOtp} onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" maxLength={6} className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-4 text-2xl font-serif tracking-[0.5em] text-center outline-none focus:border-gold-400/50 transition-colors" />
                 </div>
 
@@ -193,7 +193,7 @@ const Register: React.FC = () => {
                     <ArrowLeft size={12} /> Back
                   </button>
                   <button type="button" onClick={handleResend} disabled={resending} className="flex items-center gap-1 text-gold-400/60 hover:text-gold-400 text-xs font-sans transition-colors disabled:opacity-40">
-                    <RefreshCw size={12} className={resending ? 'animate-spin' : ''} /> Resend WhatsApp
+                    <RefreshCw size={12} className={resending ? 'animate-spin' : ''} /> Resend SMS
                   </button>
                 </div>
               </motion.form>

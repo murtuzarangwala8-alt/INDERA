@@ -26,7 +26,7 @@ const Login: React.FC = () => {
     if (res.success) {
       navigate(from, { replace: true });
     } else if (res.nextStep === 'verify-phone') {
-      toast.error(res.message || 'Please verify your WhatsApp');
+      toast.error(res.message || 'Please verify your phone number via SMS');
       navigate('/register', { state: { userId: res.userId, step: 'verify-phone' } });
     } else {
       toast.error(res.message || 'Login failed');

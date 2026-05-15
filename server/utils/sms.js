@@ -1,29 +1,30 @@
-import twilio from 'twilio';
-
-let client = null;
-
-const getClient = () => {
-  if (!client && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-    client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-  }
-  return client;
-};
-
 export const sendSmsOtp = async (phone, otp) => {
-  const twilioClient = getClient();
-
-  // In development without Twilio credentials, just log the OTP
-  if (!twilioClient) {
-    console.log(`📱 [DEV] SMS OTP for ${phone}: ${otp}`);
-    return { success: true, dev: true };
-  }
-
   try {
-    await twilioClient.messages.create({
-      body: `Your INDÉRA verification code is: ${otp}. Valid for 10 minutes. Do not share this code.`,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: phone,
+    const response = await fetch('https://api.otp.dev/v1/verifications', {
+      method: 'POST',
+      headers: {
+        'X-OTP-Key': 'd3c7435ec9857e3e82d660de487007cd',
+        'accept': 'application/json',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        data: {
+          channel: 'sms',
+          sender: '2e5d1c24-ade9-48cf-8ad1-6560a243c8cb',
+          phone: phone,
+          template: 'dec02b32-0655-4118-815a-06418ff9cda4',
+          code: String(otp)
+        }
+      })
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OTP.dev send error:', errorText);
+      return { success: false, error: errorText };
+    }
+
+    console.log(`✅ [OTP.dev] SMS sent to ${phone}`);
     return { success: true };
   } catch (error) {
     console.error('SMS send error:', error.message);
@@ -31,8 +32,5 @@ export const sendSmsOtp = async (phone, otp) => {
   }
 };
 
-export const sendWhatsappOtp = async (phone, otp) => {
-  // Bypassed for now: Just log to console and simulate success
-  console.log(`[BYPASS] WhatsApp OTP for ${phone}: ${otp}`);
-  return { success: true };
-};
+// Aliased since the auth controller calls sendWhatsappOtp
+export const sendWhatsappOtp = sendSmsOtp;

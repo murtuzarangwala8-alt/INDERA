@@ -2,7 +2,7 @@ import User from '../models/User.js';
 import Order from '../models/Order.js';
 import { generateToken, generateOtp, otpExpiry, generateResetToken } from '../utils/auth.js';
 import { sendWelcomeEmail, sendPasswordResetEmail } from '../utils/email.js';
-import { sendWhatsappOtp } from '../utils/sms.js';
+import { sendSmsOtp } from '../utils/sms.js';
 import crypto from 'crypto';
 
 const phoneVerificationRequired = () => process.env.REQUIRE_WHATSAPP_OTP !== 'false';
@@ -55,7 +55,7 @@ export const register = async (req, res) => {
     await user.save();
 
     const delivery = requirePhoneOtp
-      ? await Promise.allSettled([sendWhatsappOtp(phone, phoneOtp)])
+      ? await Promise.allSettled([sendSmsOtp(phone, phoneOtp)])
       : [];
     const whatsappError = firstDeliveryError(delivery);
 
@@ -67,8 +67,8 @@ export const register = async (req, res) => {
     res.status(201).json({
       success: true,
       message: whatsappError
-        ? `Account created, but WhatsApp code could not be sent: ${whatsappError}`
-        : 'Account created. Please verify your WhatsApp number.',
+        ? `Account created, but SMS code could not be sent: ${whatsappError}`
+        : 'Account created. Please verify your phone number.',
       userId: user._id,
       nextStep: requirePhoneOtp ? 'verify-phone' : 'complete',
       whatsappVerificationRequired: requirePhoneOtp,
@@ -119,7 +119,7 @@ export const verifyPhone = async (req, res) => {
     const token = generateToken(user._id, user.role);
     return res.json({
       success: true,
-      message: 'WhatsApp verified. Welcome to INDÉRA!',
+      message: 'Phone verified. Welcome to INDÉRA!',
       token,
       user: user.toSafeObject(),
     });
@@ -141,11 +141,11 @@ export const resendOtp = async (req, res) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
     if (type !== 'phone') {
-      return res.status(400).json({ success: false, message: 'Email verification is disabled. Use WhatsApp verification.' });
+      return res.status(400).json({ success: false, message: 'Email verification is disabled. Use SMS verification.' });
     }
 
     if (user.phoneVerified) {
-      return res.status(400).json({ success: false, message: 'WhatsApp already verified' });
+      return res.status(400).json({ success: false, message: 'Phone already verified' });
     }
 
     const otp = generateOtp();
@@ -154,7 +154,7 @@ export const resendOtp = async (req, res) => {
     user.phoneOtpExpiry = expiry;
     await user.save();
 
-    const delivery = await Promise.allSettled([sendWhatsappOtp(user.phone, otp)]);
+    const delivery = await Promise.allSettled([sendSmsOtp(user.phone, otp)]);
     const whatsappError = firstDeliveryError(delivery);
 
     // Log OTP to server console only in non-production
@@ -163,12 +163,12 @@ export const resendOtp = async (req, res) => {
     }
 
     if (whatsappError) {
-      return res.status(502).json({ success: false, message: `WhatsApp code could not be sent: ${whatsappError}` });
+      return res.status(502).json({ success: false, message: `SMS code could not be sent: ${whatsappError}` });
     }
 
     return res.json({
       success: true,
-      message: 'New code sent to your WhatsApp',
+      message: 'New code sent via SMS',
       // otp intentionally omitted — never expose OTP in API response
     });
   } catch (error) {
@@ -200,7 +200,7 @@ export const login = async (req, res) => {
       user.phoneOtpExpiry = otpExpiry();
       await user.save();
 
-      const delivery = await Promise.allSettled([sendWhatsappOtp(user.phone, otp)]);
+      const delivery = await Promise.allSettled([sendSmsOtp(user.phone, otp)]);
 
       // Log OTP to server console only in non-production
       if (process.env.NODE_ENV !== 'production') {
@@ -209,7 +209,7 @@ export const login = async (req, res) => {
 
       return res.status(403).json({
         success: false,
-        message: 'Please verify your WhatsApp number. A new code has been sent.',
+        message: 'Please verify your phone number. A new code has been sent.',
         userId: user._id,
         nextStep: 'verify-phone',
         // phoneOtp intentionally omitted
