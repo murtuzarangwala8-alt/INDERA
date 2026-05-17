@@ -19,6 +19,7 @@ import Account from './pages/Account';
 import AdminDashboard from './pages/AdminDashboard';
 import Returns from './pages/Returns';
 import OrderConfirmation from './pages/OrderConfirmation';
+import Invoice from './pages/Invoice';
 import PWAPrompt from './components/PWAPrompt';
 
 // Auth pages use full-screen dark layout — no Navbar/Footer
@@ -35,6 +36,7 @@ function App() {
             <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
             <Route path="/forgot-password" element={<AuthLayout><ForgotPassword /></AuthLayout>} />
             <Route path="/reset-password" element={<AuthLayout><ResetPassword /></AuthLayout>} />
+            <Route path="/invoice/:id" element={<Invoice />} />
 
             {/* Main site routes — with Navbar + Footer */}
             <Route path="/*" element={

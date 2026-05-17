@@ -164,6 +164,11 @@ export const adminFetchOrders = async (params: Record<string, string> = {}) => {
   return res.json();
 };
 
+export const adminFetchOrderById = async (id: string) => {
+  const res = await fetch(`${API_URL}/orders/${id}`, { headers: adminHeaders() });
+  return res.json();
+};
+
 export const adminFetchUsers = async (params: Record<string, string> = {}) => {
   const qs = new URLSearchParams(params).toString();
   const res = await fetch(`${API_URL}/auth/admin/users${qs ? `?${qs}` : ''}`, { headers: adminHeaders() });

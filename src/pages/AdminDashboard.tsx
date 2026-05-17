@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Package, Pencil, Plus, Save, Search, Trash2, X } from 'lucide-react';
+import { Eye, EyeOff, Package, Pencil, Plus, Printer, Save, Search, Trash2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Product } from '../types';
 import ImageUploader from '../components/ImageUploader';
@@ -854,13 +854,23 @@ const AdminDashboard: React.FC = () => {
                     'border-gold-400/30 text-gold-400'
                   }`}>{order.status}</span>
                 </div>
-                <select
-                  value={order.status}
-                  onChange={(event) => handleOrderStatus(order._id, event.target.value, order.trackingNumber)}
-                  className="bg-obsidian border border-ivory/10 text-ivory/70 px-3 py-2 text-xs uppercase font-sans"
-                >
-                  {ORDER_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
-                </select>
+                <div className="flex items-center gap-3">
+                  <a
+                    href={`/invoice/${order._id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="border border-ivory/10 text-ivory/50 hover:text-gold-400 hover:border-gold-400/30 px-3 py-2 text-xs uppercase font-sans flex items-center gap-2 transition-colors"
+                  >
+                    <Printer size={14} /> Invoice
+                  </a>
+                  <select
+                    value={order.status}
+                    onChange={(event) => handleOrderStatus(order._id, event.target.value, order.trackingNumber)}
+                    className="bg-obsidian border border-ivory/10 text-ivory/70 px-3 py-2 text-xs uppercase font-sans"
+                  >
+                    {ORDER_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}
+                  </select>
+                </div>
               </div>
 
               <div className="grid lg:grid-cols-3 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-ivory/5">
