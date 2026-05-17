@@ -372,8 +372,16 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleOrderStatus = async (id: string, status: string) => {
-    const response = await adminUpdateOrderStatus(id, status);
+  const handleOrderStatus = async (id: string, status: string, existingTracking?: string) => {
+    let tracking = undefined;
+    if (status === 'shipped') {
+      const input = window.prompt("Enter shipping tracking number (optional):", existingTracking || "");
+      if (input === null) {
+        return; // User cancelled
+      }
+      tracking = input;
+    }
+    const response = await adminUpdateOrderStatus(id, status, tracking);
     if (response.success) {
       toast.success('Order updated');
       await loadAdminData();
@@ -836,7 +844,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
                 <select
                   value={order.status}
-                  onChange={(event) => handleOrderStatus(order._id, event.target.value)}
+                  onChange={(event) => handleOrderStatus(order._id, event.target.value, order.trackingNumber)}
                   className="bg-obsidian border border-ivory/10 text-ivory/70 px-3 py-2 text-xs uppercase font-sans"
                 >
                   {ORDER_STATUSES.map((status) => <option key={status} value={status}>{status}</option>)}

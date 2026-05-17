@@ -183,11 +183,13 @@ export const adminFetchOrderStats = async () => {
   return res.json();
 };
 
-export const adminUpdateOrderStatus = async (id: string, status: string) => {
+export const adminUpdateOrderStatus = async (id: string, status: string, trackingNumber?: string) => {
+  const body: any = { status };
+  if (trackingNumber !== undefined) body.trackingNumber = trackingNumber;
   const res = await fetch(`${API_URL}/orders/${id}`, {
     method: 'PUT',
     headers: adminHeaders(),
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(body),
   });
   return res.json();
 };

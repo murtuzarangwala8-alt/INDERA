@@ -192,6 +192,12 @@ const Account: React.FC = () => {
                               </div>
                             ))}
                           </div>
+                          {order.trackingNumber && (
+                            <div className="mt-4 pt-3 border-t border-obsidian/4">
+                              <p className="text-[10px] tracking-widest uppercase font-sans text-obsidian/40 mb-1">Tracking Number</p>
+                              <p className="font-sans text-sm text-obsidian/80 font-mono tracking-wider">{order.trackingNumber}</p>
+                            </div>
+                          )}
                           <div className="mt-4 pt-4 border-t border-obsidian/8 flex justify-end gap-3 items-center">
                             {order.status === 'cancelling' && (
                               <span className="text-xs uppercase tracking-widest font-sans text-terracotta">
