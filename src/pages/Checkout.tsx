@@ -123,6 +123,7 @@ const ExpressPayButtons: React.FC<{ total: number; formData: any; cart: any[]; t
             navigate('/order-confirmation', {
               state: {
                 orderNumber: confirmResponse.order.orderNumber,
+                id: orderResponse.order.id,
                 total,
                 email: formData.email,
                 firstName: formData.firstName,
@@ -264,6 +265,7 @@ const CheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; token?
           navigate('/order-confirmation', {
             state: {
               orderNumber: confirmResponse.order.orderNumber,
+              id: orderResponse.order.id,
               total,
               email: formData.email,
               firstName: formData.firstName,
@@ -377,6 +379,7 @@ const DemoCheckoutForm: React.FC<{ total: number; formData: any; cart: any[]; to
       navigate('/order-confirmation', {
         state: {
           orderNumber: confirmResponse.order.orderNumber,
+          id: orderResponse.order.id,
           total,
           email: formData.email,
           firstName: formData.firstName,

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { CheckCircle, Package, ArrowRight, Home, ShoppingBag } from 'lucide-react';
+import { CheckCircle, Package, ArrowRight, Home, ShoppingBag, Printer } from 'lucide-react';
 
 interface OrderItem {
   id?: string;
@@ -13,6 +13,7 @@ interface OrderItem {
 
 interface OrderConfirmationState {
   orderNumber: string;
+  id: string;
   total: number;
   email: string;
   items: OrderItem[];
@@ -119,6 +120,12 @@ const OrderConfirmation: React.FC = () => {
             <Home size={18} />
             Back to Home
           </Link>
+          {state.id && (
+            <Link to={`/invoice/${state.id}`} className="oc-btn-secondary">
+              <Printer size={18} />
+              View Invoice
+            </Link>
+          )}
           <Link to="/products" className="oc-btn-secondary">
             <ShoppingBag size={18} />
             Continue Shopping

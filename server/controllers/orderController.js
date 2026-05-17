@@ -444,6 +444,18 @@ export const getMyOrders = async (req, res) => {
   }
 };
 
+// ── GET /api/orders/my/:id (authenticated customer) ───────────────
+export const getMyOrderById = async (req, res) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.id, user: req.user._id });
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    res.status(200).json({ success: true, order });
+  } catch (error) {
+    console.error('[getMyOrderById]', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch order.' });
+  }
+};
+
 // ── POST /api/orders/my/:id/cancel (authenticated customer) ────────
 export const cancelMyOrder = async (req, res) => {
   try {

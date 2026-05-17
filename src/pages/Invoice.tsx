@@ -1,37 +1,52 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader, Printer, ArrowLeft } from 'lucide-react';
-import { adminFetchOrderById } from '../services/api';
+import { adminFetchOrderById, fetchMyOrderById } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const Invoice: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { token } = useAuth();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrder = async () => {
       if (!id) return;
+      const adminKey = sessionStorage.getItem('indera_admin_key');
+      
       try {
-        const res = await adminFetchOrderById(id);
+        let res;
+        if (adminKey) {
+          res = await adminFetchOrderById(id);
+        } else if (token) {
+          res = await fetchMyOrderById(id, token);
+        } else {
+          toast.error('Authentication required');
+          navigate('/login');
+          return;
+        }
+
         if (res.success) {
           setOrder(res.order);
         } else {
           toast.error(res.message || 'Failed to load order');
-          navigate('/admin');
+          navigate(adminKey ? '/admin' : '/account');
         }
       } catch (error) {
         console.error('Error fetching order:', error);
+        const adminKey = sessionStorage.getItem('indera_admin_key');
         toast.error('Network error');
-        navigate('/admin');
+        navigate(adminKey ? '/admin' : '/account');
       } finally {
         setLoading(false);
       }
     };
 
     fetchOrder();
-  }, [id, navigate]);
+  }, [id, navigate, token]);
 
   const handlePrint = () => {
     window.print();

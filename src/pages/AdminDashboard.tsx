@@ -857,8 +857,6 @@ const AdminDashboard: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <a
                     href={`/invoice/${order._id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="border border-ivory/10 text-ivory/50 hover:text-gold-400 hover:border-gold-400/30 px-3 py-2 text-xs uppercase font-sans flex items-center gap-2 transition-colors"
                   >
                     <Printer size={14} /> Invoice

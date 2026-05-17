@@ -41,6 +41,13 @@ export const fetchMyOrders = async (token: string) => {
   return res.json();
 };
 
+export const fetchMyOrderById = async (id: string, token: string) => {
+  const res = await fetch(`${API_URL}/orders/my/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.json();
+};
+
 export const cancelMyOrder = async (orderId: string, token: string) => {
   const res = await fetch(`${API_URL}/orders/my/${orderId}/cancel`, {
     method: 'POST',

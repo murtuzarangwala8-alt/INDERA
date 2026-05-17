@@ -5,13 +5,14 @@ import {
   confirmPayment,
   getAllOrders,
   getMyOrders,
+  getMyOrderById,
   getOrderById,
   getOrderByNumber,
   updateOrderStatus,
   getOrderStats,
   cancelMyOrder,
 } from '../controllers/orderController.js';
-import { adminAuth } from '../middleware/auth.js';
+import { adminAuth, protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -21,6 +22,7 @@ router.post('/payment/create-intent', createPaymentIntent);
 router.post('/payment/confirm', confirmPayment);
 router.get('/orders/number/:orderNumber', getOrderByNumber);
 router.get('/orders/my', getMyOrders);
+router.get('/orders/my/:id', protect, getMyOrderById);
 router.post('/orders/my/:id/cancel', cancelMyOrder);
 
 // Admin routes
