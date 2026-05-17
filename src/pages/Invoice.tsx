@@ -30,6 +30,13 @@ const Invoice: React.FC = () => {
         }
 
         if (res.success) {
+          const adminKey = sessionStorage.getItem('indera_admin_key');
+          // If not admin, check if order is delivered
+          if (!adminKey && res.order.status?.toLowerCase() !== 'delivered') {
+            toast.error('Receipt is only available after the order is delivered.');
+            navigate('/account');
+            return;
+          }
           setOrder(res.order);
         } else {
           toast.error(res.message || 'Failed to load order');
@@ -57,7 +64,7 @@ const Invoice: React.FC = () => {
       <div className="min-h-screen bg-obsidian flex items-center justify-center text-ivory">
         <div className="text-center">
           <Loader className="animate-spin mx-auto mb-4" size={48} />
-          <p className="font-serif text-xl">Loading Invoice...</p>
+          <p className="font-serif text-xl">Loading Receipt...</p>
         </div>
       </div>
     );
@@ -85,7 +92,7 @@ const Invoice: React.FC = () => {
           onClick={handlePrint}
           className="btn-gold flex items-center gap-2 py-2 px-4 text-sm"
         >
-          <Printer size={16} /> Print Invoice
+          <Printer size={16} /> Print Receipt
         </button>
       </div>
 
@@ -98,7 +105,7 @@ const Invoice: React.FC = () => {
             <p className="text-[10px] tracking-[0.3em] uppercase font-sans text-gold-500 mt-1">Fine Jewelry</p>
           </div>
           <div className="text-left sm:text-right">
-            <h2 className="font-serif text-2xl font-light text-obsidian uppercase tracking-wide">Invoice</h2>
+            <h2 className="font-serif text-2xl font-light text-obsidian uppercase tracking-wide">Receipt</h2>
             <p className="text-xs font-sans text-charcoal/60 mt-1">Order # {order.orderNumber}</p>
             <p className="text-xs font-sans text-charcoal/60">{new Date(order.createdAt).toLocaleDateString('en-US', { dateStyle: 'long' })}</p>
           </div>

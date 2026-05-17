@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, MapPin, ShoppingBag, Shield, LogOut, Save, Trash2, Plus } from 'lucide-react';
+import { User, MapPin, ShoppingBag, Shield, LogOut, Save, Trash2, Plus, Printer } from 'lucide-react';
 import { ShippingAddress, useAuth } from '../context/AuthContext';
 import { cancelMyOrder } from '../services/api';
 import toast from 'react-hot-toast';
@@ -210,6 +210,14 @@ const Account: React.FC = () => {
                               >
                                 Cancel Order
                               </button>
+                            )}
+                            {(order.status === 'delivered' || order.status === 'completed') && (
+                              <Link
+                                to={`/invoice/${order._id}`}
+                                className="text-xs uppercase tracking-widest font-sans border border-obsidian/20 px-4 py-2 text-obsidian hover:bg-obsidian hover:text-white transition-colors flex items-center gap-2"
+                              >
+                                <Printer size={12} /> View Receipt
+                              </Link>
                             )}
                             {(order.status === 'delivered' || order.status === 'completed' || order.status === 'shipped') && (
                               <Link

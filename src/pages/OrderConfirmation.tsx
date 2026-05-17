@@ -120,12 +120,6 @@ const OrderConfirmation: React.FC = () => {
             <Home size={18} />
             Back to Home
           </Link>
-          {state.id && (
-            <Link to={`/invoice/${state.id}`} className="oc-btn-secondary">
-              <Printer size={18} />
-              View Invoice
-            </Link>
-          )}
           <Link to="/products" className="oc-btn-secondary">
             <ShoppingBag size={18} />
             Continue Shopping
