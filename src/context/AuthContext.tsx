@@ -7,7 +7,7 @@ export interface AuthUser {
   _id: string;
   firstName: string;
   lastName: string;
-  email: string;
+  email?: string;
   phone: string;
   emailVerified: boolean;
   phoneVerified: boolean;
@@ -33,7 +33,10 @@ interface AuthContextType {
   register: (data: RegisterData) => Promise<{ success: boolean; userId?: string; message?: string; phoneOtp?: string; smsSent?: boolean; nextStep?: string }>;
   verifyPhone: (userId: string, otp: string) => Promise<{ success: boolean; token?: string; message?: string }>;
   resendOtp: (userId: string, type: 'email' | 'phone') => Promise<{ success: boolean; message?: string; otp?: string }>;
-  login: (email: string, password: string) => Promise<{ success: boolean; userId?: string; nextStep?: string; message?: string; phoneOtp?: string }>;
+  login: (identifier: string, password: string) => Promise<{ success: boolean; userId?: string; nextStep?: string; message?: string; phoneOtp?: string }>;
+  requestLoginOtp: (phone: string) => Promise<{ success: boolean; message?: string }>;
+  verifyLoginOtp: (phone: string, otp: string) => Promise<{ success: boolean; message?: string }>;
+  completeOAuthLogin: (token: string, user: AuthUser) => void;
   logout: () => void;
   forgotPassword: (identifier: string) => Promise<{ success: boolean; message?: string; smsSent?: boolean }>;
   resetPassword: (identifier: string, otp: string, password: string) => Promise<{ success: boolean; message?: string }>;
@@ -48,7 +51,7 @@ interface AuthContextType {
 interface RegisterData {
   firstName: string;
   lastName: string;
-  email: string;
+  email?: string;
   phone: string;
   password: string;
 }
@@ -87,10 +90,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     restore();
   }, []);
 
-  const saveToken = (t: string) => {
+  const saveToken = React.useCallback((t: string) => {
     localStorage.setItem('indera_token', t);
     setToken(t);
-  };
+  }, []);
+
+  const completeOAuthLogin = React.useCallback((t: string, authUser: AuthUser) => {
+    saveToken(t);
+    setUser(authUser);
+    toast.success(`Welcome, ${authUser.firstName}!`);
+  }, [saveToken]);
 
   const register = async (data: RegisterData) => {
     const res = await fetch(`${API}/auth/register`, {
@@ -126,11 +135,35 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return res.json();
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (identifier: string, password: string) => {
     const res = await fetch(`${API}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ identifier, password }),
+    });
+    const json = await res.json();
+    if (json.success && json.token) {
+      saveToken(json.token);
+      setUser(json.user);
+      toast.success(`Welcome back, ${json.user.firstName}!`);
+    }
+    return json;
+  };
+
+  const requestLoginOtp = async (phone: string) => {
+    const res = await fetch(`${API}/auth/login-otp/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone }),
+    });
+    return res.json();
+  };
+
+  const verifyLoginOtp = async (phone: string, otp: string) => {
+    const res = await fetch(`${API}/auth/login-otp/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, otp }),
     });
     const json = await res.json();
     if (json.success && json.token) {
@@ -216,7 +249,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <AuthContext.Provider value={{
       user, token, loading,
       register, verifyPhone, resendOtp,
-      login, logout, forgotPassword, resetPassword,
+      login, requestLoginOtp, verifyLoginOtp, completeOAuthLogin, logout, forgotPassword, resetPassword,
       updateProfile, addAddress, deleteAddress, fetchOrders, authFetch,
       isAuthenticated: !!user,
     }}>

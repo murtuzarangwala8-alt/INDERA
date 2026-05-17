@@ -23,8 +23,15 @@ const connectDB = async () => {
         await usersCollection.dropIndex('phone_1');
         console.log('Successfully dropped the duplicate "phone_1" index from the users collection.');
       }
+
+      const emailIndex = indexes.find(idx => idx.name === 'email_1');
+      if (emailIndex && !emailIndex.sparse) {
+        await usersCollection.dropIndex('email_1');
+        await usersCollection.createIndex({ email: 1 }, { unique: true, sparse: true });
+        console.log('Rebuilt "email_1" as a sparse unique index for phone-first accounts.');
+      }
     } catch (indexError) {
-      console.warn('Could not drop "phone_1" index:', indexError.message);
+      console.warn('Could not update users indexes:', indexError.message);
     }
 
     return conn;

@@ -4,6 +4,8 @@ import {
   verifyPhone,
   resendOtp,
   login,
+  requestLoginOtp,
+  verifyLoginOtp,
   getMe,
   getMyOrders,
   forgotPassword,
@@ -24,6 +26,8 @@ const router = express.Router();
 // ── Public (rate-limited) ──────────────────────────────────────
 router.post('/register',        authLimiter, register);
 router.post('/login',           authLimiter, login);
+router.post('/login-otp/request', otpLimiter, requestLoginOtp);
+router.post('/login-otp/verify',  authLimiter, verifyLoginOtp);
 router.post('/forgot-password', forgotPasswordLimiter, forgotPassword);
 router.post('/reset-password',  authLimiter, resetPassword);
 router.post('/verify-phone',    otpLimiter,  verifyPhone);

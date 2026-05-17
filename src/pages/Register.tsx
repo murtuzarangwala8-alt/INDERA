@@ -44,10 +44,15 @@ const Register: React.FC = () => {
     setLoading(false);
 
     if (res.success) {
-      setUserId(res.userId!);
-      setStep('verify-phone');
-      if (res.smsSent === false) toast.error(res.message || 'Account created, but SMS code could not be sent');
-      else toast.success('Check SMS for your verification code');
+      if (res.nextStep === 'verify-phone') {
+        setUserId(res.userId!);
+        setStep('verify-phone');
+        if (res.smsSent === false) toast.error(res.message || 'Account created, but SMS code could not be sent');
+        else toast.success('Check SMS for your verification code');
+      } else {
+        toast.success('Account created. You can sign in with your phone number.');
+        navigate('/login', { replace: true });
+      }
     } else {
       toast.error(res.message || 'Registration failed');
     }
@@ -126,7 +131,7 @@ const Register: React.FC = () => {
             {step === 'details' && (
               <motion.form key="details" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleRegister}>
                 <h2 className="font-serif text-ivory text-2xl font-light mb-1">Create Account</h2>
-                <p className="text-ivory/40 text-xs font-sans mb-7">Join the INDERA private collection</p>
+                <p className="text-ivory/40 text-xs font-sans mb-7">Join the INDERA private collection with your phone number</p>
 
                 <OAuthButtons />
 
@@ -142,8 +147,8 @@ const Register: React.FC = () => {
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Email Address</label>
-                  <input type="email" value={form.email} onChange={set('email')} required placeholder="you@example.com" className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors" />
+                  <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Email Address <span className="text-ivory/20">Optional</span></label>
+                  <input type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors" />
                 </div>
 
                 <div className="mb-4">

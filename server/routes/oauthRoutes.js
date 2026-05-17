@@ -87,6 +87,11 @@ router.post('/google/verify', async (req, res) => {
 // Google One Tap flow (credential JWT → verify with google-auth-library)
 router.post('/google/verify-token', async (req, res) => {
   try {
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      console.error('[Google One Tap] GOOGLE_CLIENT_ID is not set in environment');
+      return res.status(500).json({ success: false, message: 'Google OAuth is not configured on this server.' });
+    }
+
     const { credential } = req.body;
     if (!credential) return res.status(400).json({ success: false, message: 'Credential is required' });
 

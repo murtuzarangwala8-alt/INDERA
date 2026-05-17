@@ -7,18 +7,31 @@ import crypto from 'crypto';
 
 const phoneVerificationRequired = () => process.env.REQUIRE_SMS_OTP !== 'false';
 const firstDeliveryError = (delivery) => delivery.find((item) => item.status === 'rejected')?.reason?.message;
+const normalizePhone = (value) => String(value || '').replace(/[^\d]/g, '');
+const phoneLookupRegex = (value) => {
+  const digits = normalizePhone(value);
+  if (!digits) return null;
+  return new RegExp(`^\\+?\\D*${digits.split('').join('\\D*')}$`);
+};
+const findUserByPhone = (phone, projection = '') => {
+  const regex = phoneLookupRegex(phone);
+  if (!regex) return null;
+  return User.findOne({ phone: { $regex: regex } }).select(projection);
+};
 
 // ── POST /api/auth/register ────────────────────────────────────
 export const register = async (req, res) => {
   try {
     const { firstName, lastName, email, phone, password } = req.body;
+    const normalizedEmail = email ? String(email).trim().toLowerCase() : undefined;
+    const normalizedPhone = String(phone || '').trim();
 
-    if (!firstName || !lastName || !email || !phone || !password) {
-      return res.status(400).json({ success: false, message: 'All fields are required' });
+    if (!firstName || !lastName || !normalizedPhone || !password) {
+      return res.status(400).json({ success: false, message: 'First name, last name, phone number, and password are required' });
     }
 
     // Basic email format check
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
+    if (normalizedEmail && !/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
       return res.status(400).json({ success: false, message: 'Invalid email address' });
     }
 
@@ -26,12 +39,12 @@ export const register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
     }
 
-    const existingEmail = await User.findOne({ email: email.toLowerCase() });
+    const existingEmail = normalizedEmail ? await User.findOne({ email: normalizedEmail }) : null;
     if (existingEmail) {
       return res.status(409).json({ success: false, message: 'An account with this email already exists' });
     }
 
-    const existingPhone = await User.findOne({ phone });
+    const existingPhone = await findUserByPhone(normalizedPhone);
     if (existingPhone) {
       return res.status(409).json({ success: false, message: 'An account with this phone number already exists' });
     }
@@ -43,10 +56,10 @@ export const register = async (req, res) => {
     const user = new User({
       firstName: String(firstName).trim().slice(0, 50),
       lastName: String(lastName).trim().slice(0, 50),
-      email,
-      phone,
+      ...(normalizedEmail ? { email: normalizedEmail } : {}),
+      phone: normalizedPhone,
       password,
-      emailVerified: true,
+      emailVerified: Boolean(normalizedEmail),
       phoneOtp,
       phoneOtpExpiry: requirePhoneOtp ? expiry : undefined,
       phoneVerified: !requirePhoneOtp,
@@ -55,13 +68,13 @@ export const register = async (req, res) => {
     await user.save();
 
     const delivery = requirePhoneOtp
-      ? await Promise.allSettled([sendSmsOtp(phone, phoneOtp)])
+      ? await Promise.allSettled([sendSmsOtp(normalizedPhone, phoneOtp)])
       : [];
     const smsError = firstDeliveryError(delivery);
 
     // Log OTP to server console only in non-production (never send in response)
     if (process.env.NODE_ENV !== 'production' && requirePhoneOtp) {
-      console.log(`[DEV] OTP for ${phone}: ${phoneOtp}`);
+      console.log(`[DEV] OTP for ${normalizedPhone}: ${phoneOtp}`);
     }
 
     res.status(201).json({
@@ -110,10 +123,12 @@ export const verifyPhone = async (req, res) => {
     if (!user.emailVerified) user.emailVerified = true;
     await user.save();
 
-    try {
-      await sendWelcomeEmail(user.email, user.firstName);
-    } catch (emailError) {
-      console.warn('Welcome email failed:', emailError.message);
+    if (user.email) {
+      try {
+        await sendWelcomeEmail(user.email, user.firstName);
+      } catch (emailError) {
+        console.warn('Welcome email failed:', emailError.message);
+      }
     }
 
     const token = generateToken(user._id, user.role);
@@ -180,17 +195,23 @@ export const resendOtp = async (req, res) => {
 // ── POST /api/auth/login ───────────────────────────────────────
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    const { identifier, phone, password } = req.body;
+    const loginIdentifier = String(identifier || phone || '').trim();
+
+    if (!loginIdentifier || !password) {
+      return res.status(400).json({ success: false, message: 'Phone number and password are required' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
-    if (!user) return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    if (loginIdentifier.includes('@')) {
+      return res.status(400).json({ success: false, message: 'Use your phone number to sign in' });
+    }
+
+    const user = await findUserByPhone(loginIdentifier, '+password');
+    if (!user) return res.status(401).json({ success: false, message: 'Invalid phone number or password' });
     if (!user.isActive) return res.status(403).json({ success: false, message: 'Account suspended. Contact support.' });
 
     const isMatch = await user.comparePassword(password);
-    if (!isMatch) return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    if (!isMatch) return res.status(401).json({ success: false, message: 'Invalid phone number or password' });
 
     if (!user.emailVerified) user.emailVerified = true;
 
@@ -227,6 +248,77 @@ export const login = async (req, res) => {
   }
 };
 
+// ── POST /api/auth/login-otp/request ───────────────────────────
+export const requestLoginOtp = async (req, res) => {
+  try {
+    const { phone } = req.body;
+    const loginPhone = String(phone || '').trim();
+    if (!loginPhone) {
+      return res.status(400).json({ success: false, message: 'Phone number is required' });
+    }
+
+    const user = await findUserByPhone(loginPhone, '+phoneOtp +phoneOtpExpiry');
+    if (!user || !user.isActive) {
+      return res.status(401).json({ success: false, message: 'No active account found for this phone number' });
+    }
+
+    const otp = generateOtp();
+    user.phoneOtp = otp;
+    user.phoneOtpExpiry = otpExpiry();
+    await user.save();
+
+    const delivery = await Promise.allSettled([sendSmsOtp(user.phone, otp)]);
+    const smsError = firstDeliveryError(delivery);
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[DEV] Login OTP for ${user.phone}: ${otp}`);
+    }
+
+    if (smsError) {
+      return res.status(502).json({ success: false, message: `SMS code could not be sent: ${smsError}` });
+    }
+
+    res.json({ success: true, message: 'Login code sent via SMS' });
+  } catch (error) {
+    console.error('[requestLoginOtp]', error);
+    res.status(500).json({ success: false, message: 'Could not send login code. Please try again.' });
+  }
+};
+
+// ── POST /api/auth/login-otp/verify ────────────────────────────
+export const verifyLoginOtp = async (req, res) => {
+  try {
+    const { phone, otp } = req.body;
+    const loginPhone = String(phone || '').trim();
+    if (!loginPhone || !otp) {
+      return res.status(400).json({ success: false, message: 'Phone number and OTP are required' });
+    }
+
+    const user = await findUserByPhone(loginPhone, '+phoneOtp +phoneOtpExpiry');
+    if (!user || !user.isActive) {
+      return res.status(401).json({ success: false, message: 'Invalid phone number or OTP' });
+    }
+    if (!user.phoneOtp || user.phoneOtp !== otp) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP' });
+    }
+    if (new Date() > user.phoneOtpExpiry) {
+      return res.status(400).json({ success: false, message: 'OTP expired. Please request a new one.' });
+    }
+
+    user.phoneVerified = true;
+    user.phoneOtp = undefined;
+    user.phoneOtpExpiry = undefined;
+    user.lastLogin = new Date();
+    await user.save();
+
+    const token = generateToken(user._id, user.role);
+    res.json({ success: true, token, user: user.toSafeObject() });
+  } catch (error) {
+    console.error('[verifyLoginOtp]', error);
+    res.status(500).json({ success: false, message: 'OTP login failed. Please try again.' });
+  }
+};
+
 // ── GET /api/auth/me ───────────────────────────────────────────
 export const getMe = async (req, res) => {
   try {
@@ -245,12 +337,9 @@ export const forgotPassword = async (req, res) => {
     const { identifier } = req.body;
     if (!identifier) return res.status(400).json({ success: false, message: 'Email or phone number is required' });
 
-    // Look up user by email or phone (ignoring spaces/formatting for phone)
-    const query = identifier.includes('@')
-      ? { email: identifier.toLowerCase().trim() }
-      : { phone: { $regex: new RegExp(identifier.replace(/\s+/g, '').replace('+', '\\+')), $options: 'i' } };
-
-    const user = await User.findOne(query);
+    const user = identifier.includes('@')
+      ? await User.findOne({ email: identifier.toLowerCase().trim() })
+      : await findUserByPhone(identifier);
     // Always return success to prevent user enumeration
     if (!user) {
       return res.json({ success: true, message: 'If that account exists, an OTP has been sent.' });
@@ -266,7 +355,7 @@ export const forgotPassword = async (req, res) => {
       await sendSmsOtp(user.phone, otp);
     } catch (smsError) {
       smsSent = false;
-      console.warn(`[forgotPassword] SMS failed for ${user.email}. OTP: ${otp}`);
+      console.warn(`[forgotPassword] SMS failed for ${user.phone}. OTP: ${otp}`);
     }
 
     // Log OTP to server console only in non-production
@@ -301,7 +390,7 @@ export const resetPassword = async (req, res) => {
     const hashed = crypto.createHash('sha256').update(otp).digest('hex');
     const query = identifier.includes('@')
       ? { email: identifier.toLowerCase().trim() }
-      : { phone: { $regex: new RegExp(identifier.replace(/\s+/g, '').replace('+', '\\+')), $options: 'i' } };
+      : { phone: { $regex: phoneLookupRegex(identifier) || /^$/ } };
 
     const user = await User.findOne({
       ...query,
@@ -351,12 +440,11 @@ export const updateProfile = async (req, res) => {
 // ── GET /api/auth/orders ───────────────────────────────────────
 export const getMyOrders = async (req, res) => {
   try {
-    const orders = await Order.find({
-      $or: [
-        { user: req.user.id },
-        { 'customer.email': req.user.email },
-      ],
-    }).sort({ createdAt: -1 });
+    const orderLookup = [{ user: req.user.id }];
+    if (req.user.email) orderLookup.push({ 'customer.email': req.user.email });
+    if (req.user.phone) orderLookup.push({ 'customer.phone': req.user.phone });
+
+    const orders = await Order.find({ $or: orderLookup }).sort({ createdAt: -1 });
     res.json({ success: true, orders });
   } catch (error) {
     console.error('[getMyOrders]', error);

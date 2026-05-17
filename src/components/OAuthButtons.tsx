@@ -2,12 +2,14 @@ import React from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 const API = import.meta.env.VITE_API_URL || '/api';
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
 interface OAuthButtonsProps {
   onSuccess?: () => void;
+  redirectTo?: string;
 }
 
 declare global {
@@ -16,8 +18,21 @@ declare global {
   }
 }
 
-export const OAuthButtons: React.FC<OAuthButtonsProps> = ({ onSuccess }) => {
+export const OAuthButtons: React.FC<OAuthButtonsProps> = ({ onSuccess, redirectTo = '/' }) => {
   const navigate = useNavigate();
+  const { completeOAuthLogin } = useAuth();
+
+  const finishGoogleLogin = React.useCallback((data: any) => {
+    if (data.success && data.token && data.user) {
+      completeOAuthLogin(data.token, data.user);
+      if (onSuccess) onSuccess();
+      else navigate(redirectTo, { replace: true });
+      return;
+    }
+
+    console.error('[Google OAuth] Server error:', data);
+    toast.error(data.message || 'Google sign-in failed. Please try again.');
+  }, [completeOAuthLogin, navigate, onSuccess, redirectTo]);
 
   const handleGoogleSuccess = async (tokenResponse: any) => {
     try {
@@ -29,16 +44,7 @@ export const OAuthButtons: React.FC<OAuthButtonsProps> = ({ onSuccess }) => {
       
       const data = await res.json();
       
-      if (data.success && data.token) {
-        localStorage.setItem('indera_token', data.token);
-        toast.success(`Welcome, ${data.user.firstName}!`);
-        if (onSuccess) onSuccess();
-        else navigate('/');
-        window.location.reload();
-      } else {
-        console.error('[Google OAuth] Server error:', data);
-        toast.error(data.message || 'Google sign-in failed. Please try again.');
-      }
+      finishGoogleLogin(data);
     } catch (error: any) {
       console.error('[Google OAuth] Network error:', error);
       toast.error(`Sign-in error: ${error?.message || 'Could not reach server'}`);
@@ -47,7 +53,7 @@ export const OAuthButtons: React.FC<OAuthButtonsProps> = ({ onSuccess }) => {
 
   const googleLogin = useGoogleLogin({
     onSuccess: handleGoogleSuccess,
-    onError: () => toast.error('Google sign-in cancelled'),
+    onError: () => toast.error('Google sign-in cancelled or unavailable'),
   });
 
   // Initialize Google One Tap
@@ -66,15 +72,10 @@ export const OAuthButtons: React.FC<OAuthButtonsProps> = ({ onSuccess }) => {
               
               const data = await res.json();
               
-              if (data.success && data.token) {
-                localStorage.setItem('indera_token', data.token);
-                toast.success(`Welcome, ${data.user.firstName}!`);
-                if (onSuccess) onSuccess();
-                else navigate('/');
-                window.location.reload();
-              }
-            } catch (error) {
+              finishGoogleLogin(data);
+            } catch (error: any) {
               console.error('Google One Tap error:', error);
+              toast.error(error?.message || 'Google One Tap sign-in failed');
             }
           },
           auto_select: false,
@@ -87,10 +88,15 @@ export const OAuthButtons: React.FC<OAuthButtonsProps> = ({ onSuccess }) => {
         console.error('Google One Tap init error:', error);
       }
     }
-  }, []);
+  }, [finishGoogleLogin]);
 
   // Handle Google Sign-In button with account chooser
   const handleGoogleSignIn = () => {
+    if (!GOOGLE_CLIENT_ID) {
+      toast.error('Google sign-in is not configured. Add VITE_GOOGLE_CLIENT_ID and restart the app.');
+      return;
+    }
+
     if (typeof window !== 'undefined' && window.google && GOOGLE_CLIENT_ID) {
       try {
         window.google.accounts.id.prompt((notification: any) => {

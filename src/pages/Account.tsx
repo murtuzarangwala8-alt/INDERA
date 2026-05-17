@@ -23,7 +23,7 @@ const emptyAddress: ShippingAddress = {
 };
 
 const Account: React.FC = () => {
-  const { user, isAuthenticated, loading, logout, updateProfile, addAddress, deleteAddress, fetchOrders, forgotPassword } = useAuth();
+  const { user, token, isAuthenticated, loading, logout, updateProfile, addAddress, deleteAddress, fetchOrders, forgotPassword } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [orders, setOrders] = useState<any[]>([]);
   const [profile, setProfile] = useState({ firstName: '', lastName: '', phone: '' });
@@ -78,15 +78,14 @@ const Account: React.FC = () => {
   };
 
   const sendPasswordReset = async () => {
-    if (!user?.email) return;
-    const response = await forgotPassword(user.email);
-    if (response.success) toast.success('Password reset email sent');
-    else toast.error(response.message || 'Could not send reset email');
+    if (!user?.phone) return;
+    const response = await forgotPassword(user.phone);
+    if (response.success) toast.success('Password reset code sent');
+    else toast.error(response.message || 'Could not send reset SMS');
   };
 
   const handleCancelOrder = async (orderId: string) => {
     if (!window.confirm('Are you sure you want to cancel this order?')) return;
-    const token = localStorage.getItem('token');
     if (!token) return;
     
     try {
@@ -112,7 +111,7 @@ const Account: React.FC = () => {
             <p className="text-gold-400 text-[10px] tracking-[0.4em] uppercase font-sans mb-2">My Account</p>
             <h1 className="font-serif text-ivory text-4xl font-light">{user?.firstName} {user?.lastName}</h1>
             <div className="flex flex-wrap items-center gap-3 mt-3">
-              <span className="text-ivory/40 text-xs font-sans">{user?.email}</span>
+              {user?.email && <span className="text-ivory/40 text-xs font-sans">{user.email}</span>}
               <span className="text-ivory/40 text-xs font-sans">{user?.phone}</span>
               {user?.emailVerified && <span className="text-[9px] tracking-widest uppercase font-sans text-green-400/70 border border-green-400/20 px-2 py-0.5">Email verified</span>}
               {user?.phoneVerified && <span className="text-[9px] tracking-widest uppercase font-sans text-green-400/70 border border-green-400/20 px-2 py-0.5">Phone verified</span>}
@@ -152,7 +151,7 @@ const Account: React.FC = () => {
                   <div className="grid sm:grid-cols-2 gap-5">
                     <Field label="First Name" value={profile.firstName} onChange={(value) => setProfile({ ...profile, firstName: value })} />
                     <Field label="Last Name" value={profile.lastName} onChange={(value) => setProfile({ ...profile, lastName: value })} />
-                    <ReadOnly label="Email Address" value={user?.email || ''} />
+                    <ReadOnly label="Email Address" value={user?.email || 'Not added'} />
                     <Field label="Phone Number" value={profile.phone} onChange={(value) => setProfile({ ...profile, phone: value })} />
                   </div>
                   <button type="submit" disabled={saving} className="btn-gold mt-6 flex items-center gap-2">
@@ -268,7 +267,7 @@ const Account: React.FC = () => {
                   <div className="space-y-4">
                     <SecurityRow label="Email Verified" status={!!user?.emailVerified} value={user?.email || ''} />
                     <SecurityRow label="Phone Verified" status={!!user?.phoneVerified} value={user?.phone || ''} />
-                    <button onClick={sendPasswordReset} className="btn-outline text-xs py-3">Send Password Reset</button>
+                    <button onClick={sendPasswordReset} className="btn-outline text-xs py-3">Send Password Reset SMS</button>
                   </div>
                 </div>
               )}

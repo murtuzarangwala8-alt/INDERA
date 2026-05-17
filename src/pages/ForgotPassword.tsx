@@ -67,11 +67,11 @@ export const ForgotPassword: React.FC = () => {
           {step === 'email' ? (
             <>
               <h2 className="font-serif text-ivory text-2xl font-light mb-1">Reset Password</h2>
-              <p className="text-ivory/40 text-xs font-sans mb-8">Enter your email or phone number and we'll text you an OTP code.</p>
+              <p className="text-ivory/40 text-xs font-sans mb-8">Enter your phone number and we'll text you an OTP code.</p>
               <form onSubmit={handleSendOtp}>
                 <div className="mb-7">
-                  <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Email Address or Phone Number</label>
-                  <input type="text" value={identifier} onChange={(e) => setIdentifier(e.target.value)} required placeholder="you@example.com or +1234567890"
+                  <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Phone Number</label>
+                  <input type="tel" value={identifier} onChange={(e) => setIdentifier(e.target.value)} required placeholder="+39 333 123 4567"
                     className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors" />
                 </div>
                 <button type="submit" disabled={loading} className="btn-gold w-full py-4 flex items-center justify-center gap-2 disabled:opacity-50">
