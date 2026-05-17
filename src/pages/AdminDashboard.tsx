@@ -81,6 +81,7 @@ const AdminDashboard: React.FC = () => {
   const [newCategoryImage, setNewCategoryImage] = useState('');
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState('');
+  const [showPendingOrders, setShowPendingOrders] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -819,14 +820,25 @@ const AdminDashboard: React.FC = () => {
           </div>
         </div>
 
-        <h2 className="font-serif text-ivory text-3xl font-light mb-4">Orders</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 mt-10">
+          <h2 className="font-serif text-ivory text-3xl font-light">Orders</h2>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showPendingOrders}
+              onChange={(e) => setShowPendingOrders(e.target.checked)}
+              className="w-4 h-4 accent-gold-400"
+            />
+            <span className="text-ivory/60 text-xs font-sans uppercase tracking-widest">Show Pending Orders</span>
+          </label>
+        </div>
         <div className="space-y-4">
-          {orders.length === 0 && (
+          {orders.filter(order => showPendingOrders || order.status !== 'pending').length === 0 && (
             <div className="glass-dark rounded-sm p-10 text-center" style={{ border: '1px solid rgba(201,168,76,0.1)' }}>
-              <p className="text-ivory/30 font-serif text-xl">No orders yet</p>
+              <p className="text-ivory/30 font-serif text-xl">No orders found</p>
             </div>
           )}
-          {orders.map((order) => (
+          {orders.filter(order => showPendingOrders || order.status !== 'pending').map((order) => (
             <div key={order._id} className="glass-dark rounded-sm overflow-hidden" style={{ border: '1px solid rgba(201,168,76,0.1)' }}>
               {/* Order Header */}
               <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-ivory/5 bg-ivory/[0.02]">
@@ -929,6 +941,36 @@ const AdminDashboard: React.FC = () => {
                   )}
                 </div>
               </div>
+
+              {/* Return Request Integration */}
+              {returns.filter(r => r.orderNumber === order.orderNumber).map(orderReturn => (
+                <div key={orderReturn._id} className="border-t border-ivory/5 px-6 py-4 bg-terracotta/[0.03]">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <p className="text-terracotta text-[10px] tracking-widest uppercase font-sans mb-1">Return Request Active</p>
+                      <p className="text-ivory/70 text-xs font-sans font-medium capitalize">{orderReturn.reason.replace(/_/g, ' ')}</p>
+                      <p className="text-ivory/40 text-[10px] font-sans mt-0.5">{new Date(orderReturn.createdAt).toLocaleString()}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-[9px] tracking-widest uppercase font-sans px-2 py-1 border ${
+                        orderReturn.status === 'completed' || orderReturn.status === 'approved' ? 'border-green-400/30 text-green-400' :
+                        orderReturn.status === 'rejected' ? 'border-terracotta/30 text-terracotta' :
+                        'border-gold-400/30 text-gold-400'
+                      }`}>{orderReturn.status.replace(/_/g, ' ')}</span>
+                      
+                      <select
+                        value={orderReturn.status}
+                        onChange={(e) => handleReturnStatus(orderReturn._id, e.target.value)}
+                        className="bg-obsidian border border-ivory/10 text-ivory/70 px-2 py-1 text-[10px] uppercase font-sans"
+                      >
+                        {['pending', 'under_review', 'approved', 'rejected', 'completed'].map((s) => (
+                          <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
         </div>
