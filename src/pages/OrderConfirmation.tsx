@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { CheckCircle, Package, ArrowRight, Home, ShoppingBag, Printer } from 'lucide-react';
+import { CheckCircle, Package, ArrowRight, Home, ShoppingBag } from 'lucide-react';
 
 interface OrderItem {
   id?: string;
