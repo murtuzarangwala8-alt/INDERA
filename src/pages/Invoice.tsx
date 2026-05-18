@@ -197,6 +197,7 @@ const Invoice: React.FC = () => {
           <p className="font-medium text-charcoal/60">Thank you for your purchase.</p>
           <p>For any inquiries, please contact support@indera.it</p>
           <p className="pt-4 text-[9px] tracking-wider uppercase">INDÉRA · Milan, Italy</p>
+          <p className="pt-2 text-[10px] text-charcoal/60">This document is a non-fiscal payment receipt issued by an independent small business and does not constitute a VAT invoice</p>
         </div>
       </div>
     </div>
