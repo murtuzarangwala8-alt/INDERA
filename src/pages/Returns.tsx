@@ -177,7 +177,7 @@ const Returns: React.FC = () => {
                   <label className="block text-[10px] tracking-widest uppercase text-ivory/40 mb-2">First Name</label>
                   <input
                     name="firstName" required value={formData.firstName} onChange={handleChange}
-                    className="w-full bg-transparent border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
+                    className="w-full bg-transparent border border-ivory/15 text-ivory text-base px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
                     placeholder="John"
                   />
                 </div>
@@ -185,7 +185,7 @@ const Returns: React.FC = () => {
                   <label className="block text-[10px] tracking-widest uppercase text-ivory/40 mb-2">Last Name</label>
                   <input
                     name="lastName" required value={formData.lastName} onChange={handleChange}
-                    className="w-full bg-transparent border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
+                    className="w-full bg-transparent border border-ivory/15 text-ivory text-base px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
                     placeholder="Doe"
                   />
                 </div>
@@ -195,7 +195,7 @@ const Returns: React.FC = () => {
                 <label className="block text-[10px] tracking-widest uppercase text-ivory/40 mb-2">Email Address</label>
                 <input
                   name="email" type="email" required value={formData.email} onChange={handleChange}
-                  className="w-full bg-transparent border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
+                  className="w-full bg-transparent border border-ivory/15 text-ivory text-base px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
                   placeholder="your@email.com"
                 />
               </div>
@@ -204,7 +204,7 @@ const Returns: React.FC = () => {
                 <label className="block text-[10px] tracking-widest uppercase text-ivory/40 mb-2">Order Number</label>
                 <input
                   name="orderNumber" required value={formData.orderNumber} onChange={handleChange}
-                  className="w-full bg-transparent border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
+                  className="w-full bg-transparent border border-ivory/15 text-ivory text-base px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
                   placeholder="e.g. INDERA-2024-001"
                 />
               </div>
@@ -214,7 +214,7 @@ const Returns: React.FC = () => {
                   <label className="block text-[10px] tracking-widest uppercase text-ivory/40 mb-2">Return Reason</label>
                   <select
                     name="reason" required value={formData.reason} onChange={handleChange}
-                    className="w-full bg-obsidian border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors"
+                    className="w-full bg-obsidian border border-ivory/15 text-ivory text-base px-4 py-3 outline-none focus:border-gold-400/50 transition-colors"
                   >
                     <option value="" disabled>Select a reason</option>
                     <option value="damaged">Damaged on arrival</option>
@@ -228,7 +228,7 @@ const Returns: React.FC = () => {
                   <label className="block text-[10px] tracking-widest uppercase text-ivory/40 mb-2">I Would Like</label>
                   <select
                     name="resolution" required value={formData.resolution} onChange={handleChange}
-                    className="w-full bg-obsidian border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors"
+                    className="w-full bg-obsidian border border-ivory/15 text-ivory text-base px-4 py-3 outline-none focus:border-gold-400/50 transition-colors"
                   >
                     <option value="exchange">Exchange</option>
                     <option value="refund">Return</option>
@@ -240,7 +240,7 @@ const Returns: React.FC = () => {
                 <label className="block text-[10px] tracking-widest uppercase text-ivory/40 mb-2">Description</label>
                 <textarea
                   name="description" required rows={5} value={formData.description} onChange={handleChange}
-                  className="w-full bg-transparent border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors resize-none placeholder:text-ivory/20"
+                  className="w-full bg-transparent border border-ivory/15 text-ivory text-base px-4 py-3 outline-none focus:border-gold-400/50 transition-colors resize-none placeholder:text-ivory/20"
                   placeholder="Please describe the issue in detail. For damaged items, describe the damage and attach photos by email after submission."
                 />
               </div>

@@ -72,7 +72,7 @@ export const ForgotPassword: React.FC = () => {
                 <div className="mb-7">
                   <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Phone Number</label>
                   <input type="tel" value={identifier} onChange={(e) => setIdentifier(e.target.value)} required placeholder="+39 333 123 4567"
-                    className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors" />
+                    className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-base font-sans outline-none focus:border-gold-400/50 transition-colors" />
                 </div>
                 <button type="submit" disabled={loading} className="btn-gold w-full py-4 flex items-center justify-center gap-2 disabled:opacity-50">
                   {loading ? 'Sending...' : <><span>Send OTP Code</span><ArrowRight size={14} /></>}
@@ -98,7 +98,7 @@ export const ForgotPassword: React.FC = () => {
                     <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">{label}</label>
                     <div className="relative">
                       <input type={showPassword ? 'text' : 'password'} value={value} onChange={(e) => set(e.target.value)} required placeholder="Min. 8 characters"
-                        className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 pr-12 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors" />
+                        className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 pr-12 text-base font-sans outline-none focus:border-gold-400/50 transition-colors" />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-ivory/30 hover:text-ivory/60">
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>

@@ -53,7 +53,7 @@ const Newsletter: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Your email address"
               required
-              className="flex-1 bg-transparent border border-gold-400/30 text-ivory placeholder-ivory/30 px-5 py-3 text-sm font-sans outline-none focus:border-gold-400/60 transition-colors"
+              className="flex-1 bg-transparent border border-gold-400/30 text-ivory placeholder-ivory/30 px-5 py-3 text-base font-sans outline-none focus:border-gold-400/60 transition-colors"
             />
             <button type="submit" className="btn-gold whitespace-nowrap">
               Join Now

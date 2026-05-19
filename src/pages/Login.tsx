@@ -111,7 +111,7 @@ const Login: React.FC = () => {
               <input
                 type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required
                 placeholder="+39 333 123 4567"
-                className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors"
+                className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-base font-sans outline-none focus:border-gold-400/50 transition-colors"
               />
             </div>
 
@@ -123,7 +123,7 @@ const Login: React.FC = () => {
                     <input
                       type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required
                       placeholder="Your password"
-                      className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 pr-12 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors"
+                      className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 pr-12 text-base font-sans outline-none focus:border-gold-400/50 transition-colors"
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-ivory/30 hover:text-ivory/60">
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}

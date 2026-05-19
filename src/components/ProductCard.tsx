@@ -59,10 +59,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
         {/* Wishlist */}
         <button
           onClick={(e) => { e.preventDefault(); toggleWishlist(product); }}
-          className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+          className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 z-10 ${
             isWishlisted
               ? 'bg-gold-400 text-obsidian'
-              : 'bg-ivory/80 text-obsidian/60 opacity-0 group-hover:opacity-100'
+              : 'bg-ivory/80 text-obsidian/60 md:opacity-0 md:group-hover:opacity-100 opacity-100'
           }`}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
         >
@@ -70,11 +70,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
         </button>
 
         {/* Quick Add */}
-        <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-400">
+        <div className="absolute bottom-0 left-0 right-0 md:translate-y-full md:group-hover:translate-y-0 translate-y-0 transition-transform duration-400 z-10">
           <button
             onClick={(e) => { e.preventDefault(); if (product.inStock) addToCart(product); }}
             disabled={!product.inStock}
-            className="w-full py-3 flex items-center justify-center gap-2 text-[10px] tracking-[0.25em] uppercase font-sans font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-2.5 md:py-3 flex items-center justify-center gap-2 text-[10px] tracking-[0.25em] uppercase font-sans font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               background: 'linear-gradient(135deg, #C9A84C 0%, #E8C97A 50%, #B8960C 100%)',
               color: '#0D0D0D',

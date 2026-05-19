@@ -2,11 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
+import './config/env.js';
 
-// Load env vars FIRST — before any other imports that read process.env
-dotenv.config();
-
+// Env is loaded from server/.env regardless of launch directory.
 import connectDB from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
 import oauthRoutes from './routes/oauthRoutes.js';

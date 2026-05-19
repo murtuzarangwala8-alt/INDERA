@@ -290,7 +290,7 @@ const Account: React.FC = () => {
 const Field: React.FC<{ label: string; value: string; onChange: (value: string) => void }> = ({ label, value, onChange }) => (
   <div>
     <label className="block text-[10px] tracking-widest uppercase font-sans text-obsidian/40 mb-2">{label}</label>
-    <input value={value} onChange={(event) => onChange(event.target.value)} className="w-full text-obsidian font-sans text-sm py-3 px-4 border border-obsidian/8 bg-ivory/50 outline-none focus:border-gold-400/50" />
+    <input value={value} onChange={(event) => onChange(event.target.value)} className="w-full text-obsidian font-sans text-base py-3 px-4 border border-obsidian/8 bg-ivory/50 outline-none focus:border-gold-400/50" />
   </div>
 );
 

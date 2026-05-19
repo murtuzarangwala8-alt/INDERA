@@ -53,11 +53,11 @@ const Cart: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-between mt-3">
                       <div className="flex items-center border border-obsidian/12">
-                        <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="px-3 py-2 hover:bg-sand/50 transition-colors">
+                        <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="w-10 h-10 flex items-center justify-center hover:bg-sand/50 transition-colors" aria-label="Decrease quantity">
                           <Minus size={12} />
                         </button>
                         <span className="px-4 font-serif text-base">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="px-3 py-2 hover:bg-sand/50 transition-colors">
+                        <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="w-10 h-10 flex items-center justify-center hover:bg-sand/50 transition-colors" aria-label="Increase quantity">
                           <Plus size={12} />
                         </button>
                       </div>

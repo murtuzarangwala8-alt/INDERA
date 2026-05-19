@@ -138,29 +138,29 @@ const Register: React.FC = () => {
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div>
                     <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">First Name</label>
-                    <input value={form.firstName} onChange={set('firstName')} required placeholder="Priya" className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors" />
+                    <input value={form.firstName} onChange={set('firstName')} required placeholder="Priya" className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-base font-sans outline-none focus:border-gold-400/50 transition-colors" />
                   </div>
                   <div>
                     <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Last Name</label>
-                    <input value={form.lastName} onChange={set('lastName')} required placeholder="Sharma" className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors" />
+                    <input value={form.lastName} onChange={set('lastName')} required placeholder="Sharma" className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-base font-sans outline-none focus:border-gold-400/50 transition-colors" />
                   </div>
                 </div>
 
                 <div className="mb-4">
                   <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Email Address <span className="text-ivory/20">Optional</span></label>
-                  <input type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors" />
+                  <input type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-base font-sans outline-none focus:border-gold-400/50 transition-colors" />
                 </div>
 
                 <div className="mb-4">
                   <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Phone Number</label>
-                  <input type="tel" value={form.phone} onChange={set('phone')} required placeholder="+39 333 123 4567" className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors" />
+                  <input type="tel" value={form.phone} onChange={set('phone')} required placeholder="+39 333 123 4567" className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 text-base font-sans outline-none focus:border-gold-400/50 transition-colors" />
                   <p className="text-ivory/20 text-[10px] font-sans mt-1">Include country code, for example +39 for Italy.</p>
                 </div>
 
                 <div className="mb-7">
                   <label className="block text-[10px] tracking-widest uppercase font-sans text-ivory/40 mb-2">Password</label>
                   <div className="relative">
-                    <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={set('password')} required placeholder="Min. 8 characters" className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 pr-12 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors" />
+                    <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={set('password')} required placeholder="Min. 8 characters" className="w-full bg-transparent border border-ivory/10 text-ivory placeholder-ivory/20 px-4 py-3 pr-12 text-base font-sans outline-none focus:border-gold-400/50 transition-colors" />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-ivory/30 hover:text-ivory/60">
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>

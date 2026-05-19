@@ -1,8 +1,5 @@
-import dotenv from 'dotenv';
+import './config/env.js';
 import nodemailer from 'nodemailer';
-
-// Load environment variables from .env
-dotenv.config();
 
 const testEmail = async () => {
   console.log('Testing SMTP connection...');

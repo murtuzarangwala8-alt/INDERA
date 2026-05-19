@@ -511,28 +511,28 @@ const Checkout: React.FC = () => {
                   <label className="block text-[10px] tracking-widest uppercase text-ivory/40 mb-2">First Name</label>
                   <input
                     type="text" required value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className="w-full bg-transparent border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
+                    className="w-full bg-transparent border border-ivory/15 text-ivory text-base px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
                   />
                 </div>
                 <div>
                   <label className="block text-[10px] tracking-widest uppercase text-ivory/40 mb-2">Last Name</label>
                   <input
                     type="text" required value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    className="w-full bg-transparent border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
+                    className="w-full bg-transparent border border-ivory/15 text-ivory text-base px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
                   />
                 </div>
                 <div>
                   <label className="block text-[10px] tracking-widest uppercase text-ivory/40 mb-2">Email Address</label>
                   <input
                     type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full bg-transparent border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
+                    className="w-full bg-transparent border border-ivory/15 text-ivory text-base px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
                   />
                 </div>
                 <div>
                   <label className="block text-[10px] tracking-widest uppercase text-ivory/40 mb-2">Phone Number</label>
                   <input
                     type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full bg-transparent border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
+                    className="w-full bg-transparent border border-ivory/15 text-ivory text-base px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
                   />
                 </div>
               </div>
@@ -545,7 +545,7 @@ const Checkout: React.FC = () => {
                   <label className="block text-[10px] tracking-widest uppercase text-ivory/40 mb-2">Street Address</label>
                   <input
                     type="text" required value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full bg-transparent border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
+                    className="w-full bg-transparent border border-ivory/15 text-ivory text-base px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -553,21 +553,21 @@ const Checkout: React.FC = () => {
                     <label className="block text-[10px] tracking-widest uppercase text-ivory/40 mb-2">City</label>
                     <input
                       type="text" required value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full bg-transparent border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
+                      className="w-full bg-transparent border border-ivory/15 text-ivory text-base px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
                     />
                   </div>
                   <div>
                     <label className="block text-[10px] tracking-widest uppercase text-ivory/40 mb-2">ZIP Code</label>
                     <input
                       type="text" required value={formData.zipCode} onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-                      className="w-full bg-transparent border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
+                      className="w-full bg-transparent border border-ivory/15 text-ivory text-base px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
                     />
                   </div>
                   <div>
                     <label className="block text-[10px] tracking-widest uppercase text-ivory/40 mb-2">Country</label>
                     <input
                       type="text" required value={formData.country} onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                      className="w-full bg-transparent border border-ivory/15 text-ivory text-sm px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
+                      className="w-full bg-transparent border border-ivory/15 text-ivory text-base px-4 py-3 outline-none focus:border-gold-400/50 transition-colors placeholder:text-ivory/20"
                     />
                   </div>
                 </div>

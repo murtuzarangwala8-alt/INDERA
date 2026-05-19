@@ -199,11 +199,11 @@ const ProductDetail: React.FC = () => {
               <div className="flex items-center gap-4">
                 <span className="text-xs tracking-widest uppercase font-sans text-obsidian/40">Qty</span>
                 <div className="flex items-center border border-obsidian/15">
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 py-3 hover:bg-sand/50 transition-colors">
+                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-12 h-12 flex items-center justify-center hover:bg-sand/50 transition-colors" aria-label="Decrease quantity">
                     <Minus size={14} />
                   </button>
                   <span className="px-6 font-serif text-lg">{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-3 hover:bg-sand/50 transition-colors">
+                  <button onClick={() => setQuantity(quantity + 1)} className="w-12 h-12 flex items-center justify-center hover:bg-sand/50 transition-colors" aria-label="Increase quantity">
                     <Plus size={14} />
                   </button>
                 </div>
@@ -248,6 +248,62 @@ const ProductDetail: React.FC = () => {
             </div>
           </motion.div>
         </div>
+
+        {/* ── Luxury Unboxing & Craftsmanship Guarantee ────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="mt-28 bg-obsidian text-ivory p-8 md:p-16 border border-gold-400/15 relative overflow-hidden"
+        >
+          {/* Subtle gold blur accent */}
+          <div className="absolute top-1/2 left-1/4 w-80 h-80 rounded-full blur-3xl pointer-events-none opacity-10 bg-gold-400" />
+          
+          <div className="relative z-10 grid lg:grid-cols-12 gap-12 items-center">
+            <div className="lg:col-span-7 space-y-6">
+              <span className="text-gold-400 text-[10px] tracking-[0.45em] uppercase font-sans block">The Presentation</span>
+              <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-light tracking-wide leading-tight">
+                An Exquisite <br />
+                <em className="gold-text not-italic font-light">Unboxing Ritual</em>
+              </h2>
+              <p className="text-ivory/60 font-sans font-light text-sm md:text-base leading-relaxed max-w-xl">
+                Every bespoke INDÉRA piece is lovingly placed in a heavy-weight textured ivory case, wrapped in fine cotton tissue, and sealed with signature gold silk chord. A ritual of anticipation, crafted for the ultimate presentation.
+              </p>
+              
+              {/* Luxury Trust Perks */}
+              <div className="grid sm:grid-cols-3 gap-6 pt-8 border-t border-ivory/10">
+                <div>
+                  <span className="text-gold-400 text-[9px] tracking-widest uppercase font-sans block mb-1">Authenticity</span>
+                  <p className="font-serif text-base font-light">IGI Gem Certification</p>
+                </div>
+                <div>
+                  <span className="text-gold-400 text-[9px] tracking-widest uppercase font-sans block mb-1">Shipping</span>
+                  <p className="font-serif text-base font-light">Complimentary Insured Courier</p>
+                </div>
+                <div>
+                  <span className="text-gold-400 text-[9px] tracking-widest uppercase font-sans block mb-1">Assurance</span>
+                  <p className="font-serif text-base font-light">Lifetime Guild Guarantee</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Visual Box Rendering */}
+            <div className="lg:col-span-5 flex justify-center">
+              <div className="relative w-full max-w-sm aspect-[4/3] bg-ivory/[0.03] border border-ivory/10 p-6 flex flex-col justify-center items-center text-center shadow-xl">
+                {/* SVG Luxury Box Outline */}
+                <svg viewBox="0 0 100 100" className="w-24 h-24 mb-4 drop-shadow-[0_4px_10px_rgba(201,168,76,0.2)]">
+                  <path d="M50,15 L85,30 L50,45 L15,30 Z" fill="none" stroke="#C9A84C" strokeWidth="1.5" />
+                  <path d="M15,30 L15,70 L50,85 L50,45 Z" fill="none" stroke="#C9A84C" strokeWidth="1.5" opacity="0.8" />
+                  <path d="M85,30 L85,70 L50,85 L50,45 Z" fill="none" stroke="#C9A84C" strokeWidth="1.5" opacity="0.8" />
+                  <path d="M50,45 L50,85" stroke="#FAF7F2" strokeWidth="1" strokeDasharray="2 2" opacity="0.4" />
+                </svg>
+                <span className="text-gold-400 text-[10px] tracking-[0.3em] uppercase font-sans">The Signature Casket</span>
+                <p className="text-ivory/45 text-[9px] font-sans mt-1">Includes certificate holder, silk wrapping, and polishing mitt.</p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
         {/* ── Reviews Section ────────────────────────────── */}
         <div className="mt-20 border-t border-obsidian/8 pt-16">
@@ -427,7 +483,7 @@ const ProductDetail: React.FC = () => {
                 value={reviewData.title}
                 onChange={(e) => setReviewData({ ...reviewData, title: e.target.value })}
                 placeholder="Summarise your experience"
-                className="w-full bg-transparent border border-obsidian/15 text-obsidian placeholder-obsidian/25 px-4 py-3 text-sm font-sans outline-none focus:border-gold-500/50 transition-colors"
+                className="w-full bg-transparent border border-obsidian/15 text-obsidian placeholder-obsidian/25 px-4 py-3 text-base font-sans outline-none focus:border-gold-500/50 transition-colors"
               />
             </div>
 
@@ -438,7 +494,7 @@ const ProductDetail: React.FC = () => {
                 value={reviewData.body}
                 onChange={(e) => setReviewData({ ...reviewData, body: e.target.value })}
                 placeholder="Tell others about your experience with this piece…"
-                className="w-full bg-transparent border border-obsidian/15 text-obsidian placeholder-obsidian/25 px-4 py-3 text-sm font-sans outline-none focus:border-gold-500/50 transition-colors resize-none"
+                className="w-full bg-transparent border border-obsidian/15 text-obsidian placeholder-obsidian/25 px-4 py-3 text-base font-sans outline-none focus:border-gold-500/50 transition-colors resize-none"
                 rows={4}
                 required
               />
@@ -453,7 +509,7 @@ const ProductDetail: React.FC = () => {
                   value={reviewData.authorName}
                   onChange={(e) => setReviewData({ ...reviewData, authorName: e.target.value })}
                   placeholder="Jane"
-                  className="w-full bg-transparent border border-obsidian/15 text-obsidian placeholder-obsidian/25 px-4 py-3 text-sm font-sans outline-none focus:border-gold-500/50 transition-colors"
+                  className="w-full bg-transparent border border-obsidian/15 text-obsidian placeholder-obsidian/25 px-4 py-3 text-base font-sans outline-none focus:border-gold-500/50 transition-colors"
                   required
                 />
               </div>
@@ -464,7 +520,7 @@ const ProductDetail: React.FC = () => {
                   value={reviewData.authorEmail}
                   onChange={(e) => setReviewData({ ...reviewData, authorEmail: e.target.value })}
                   placeholder="jane@email.com"
-                  className="w-full bg-transparent border border-obsidian/15 text-obsidian placeholder-obsidian/25 px-4 py-3 text-sm font-sans outline-none focus:border-gold-500/50 transition-colors"
+                  className="w-full bg-transparent border border-obsidian/15 text-obsidian placeholder-obsidian/25 px-4 py-3 text-base font-sans outline-none focus:border-gold-500/50 transition-colors"
                 />
               </div>
             </div>
