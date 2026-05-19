@@ -40,7 +40,7 @@ function App() {
 
 function AppContent() {
   const location = useLocation();
-  const isHome = location.pathname === '/';
+  const isTransparentNavbarPage = location.pathname === '/' || location.pathname === '/products';
 
   return (
     <>
@@ -57,7 +57,7 @@ function AppContent() {
           <div className="flex flex-col" style={{ minHeight: '100vh', background: 'transparent' }}>
             <IntroLoader />
             <Navbar />
-            <main className={`flex-1 ${isHome ? '' : 'pt-24 lg:pt-36'}`}>
+            <main className={`flex-1 ${isTransparentNavbarPage ? '' : 'pt-36 lg:pt-56'}`}>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/products" element={<Products />} />

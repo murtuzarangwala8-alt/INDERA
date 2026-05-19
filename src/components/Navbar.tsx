@@ -47,6 +47,7 @@ const Navbar: React.FC = () => {
   }, [searchQuery, navigate]);
 
   const navLinks = [
+    { label: 'Home', href: '/' },
     { label: 'Collections', href: '/products' },
     { label: 'Story', href: '/about' },
     { label: 'Lookbook', href: '/products?category=lookbook' },
@@ -57,44 +58,48 @@ const Navbar: React.FC = () => {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 border-b border-transparent bg-transparent ${
-          scrolled 
-            ? 'py-3' 
-            : 'py-5'
-        }`}
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-700 py-5 bg-transparent border-b border-transparent"
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between h-24 lg:h-36">
+          <div className="flex items-center justify-between h-20 lg:h-24">
             
-            {/* Brand Logo (Top Left & Enlarged just for Desktop) */}
-            <Link to="/" className="flex flex-col items-start justify-center leading-none h-24 lg:h-36 min-w-[220px]">
+            <Link 
+              to="/" 
+              className={`flex flex-col items-start justify-center leading-none h-24 lg:h-28 min-w-[220px] transition-all duration-700 ${
+                scrolled ? 'opacity-0 pointer-events-none translate-y-[-10px]' : 'opacity-100'
+              }`}
+            >
               <img 
                 src="/logo.png" 
                 alt="INDÉRA Logo" 
-                className="max-h-20 lg:max-h-32 w-auto object-contain transition-all hover:opacity-85" 
+                className="max-h-18 lg:max-h-24 w-auto object-contain transition-all hover:opacity-95 filter drop-shadow-[0_0_8px_rgba(201,168,76,0.15)] hover:drop-shadow-[0_0_16px_rgba(201,168,76,0.35)] duration-500"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                   const fallback = document.getElementById('indera-logo-fallback');
                   if (fallback) fallback.style.display = 'flex';
                 }}
               />
-              <div id="indera-logo-fallback" className="hidden flex-col items-start">
-                <span className="font-serif text-3xl lg:text-5xl font-light tracking-[0.25em] text-ivory">
+              <div id="indera-logo-fallback" className="hidden flex-col items-start select-none">
+                <span className="font-serif text-3xl lg:text-4xl font-light tracking-[0.25em] text-ivory drop-shadow-[0_0_8px_rgba(201,168,76,0.2)]">
                   INDÉRA
                 </span>
-                <span className="text-[10px] tracking-[0.45em] text-gold-400 uppercase font-sans font-light mt-1.5">
+                <span className="tracking-[0.45em] text-gold-400 uppercase font-sans font-light mt-1.5 text-[9px] sm:text-[10px]">
                   Indo-European Atelier
                 </span>
               </div>
             </Link>
 
-            {/* Minimal Toggle (Global Hamburger - Top Right & Enlarged with Black Background) */}
+            {/* Minimal Toggle (Global Hamburger - Borderless, Floating & Ultra-thin Line) */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="flex items-center justify-center w-14 h-14 rounded-full bg-black border border-gold-400/25 text-ivory hover:text-gold-400 hover:border-gold-400/50 shadow-2xl transition-all duration-300 hover:scale-105"
+              className="flex items-center justify-center p-3 text-ivory hover:text-gold-400 transition-all duration-300 hover:scale-105 group relative z-50"
               aria-label="Toggle menu"
             >
-              {isOpen ? <X size={28} /> : <Menu size={28} />}
+              {isOpen ? (
+                <X size={26} strokeWidth={1.2} className="transform group-hover:rotate-90 transition-transform duration-500" />
+              ) : (
+                <Menu size={26} strokeWidth={1.2} className="transform transition-transform duration-500" />
+              )}
             </button>
 
           </div>

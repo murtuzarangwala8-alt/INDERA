@@ -41,99 +41,151 @@ const Products: React.FC = () => {
   }, [filters, products]);
 
   return (
-    <div className="min-h-screen bg-ivory pt-24">
-      {/* Page Header */}
-      <div className="bg-obsidian py-20 px-6 text-center">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-          <p className="text-gold-400 text-[10px] tracking-[0.4em] uppercase font-sans mb-4">INDÉRA</p>
-          <h1 className="font-serif text-ivory text-5xl font-light">
+    <div className="min-h-screen bg-ivory">
+      {/* Editorial Page Header */}
+      <div className="relative bg-[#0d0d0d] pt-28 sm:pt-32 pb-6 sm:pb-8 px-6 text-center overflow-hidden border-b border-gold-400/10">
+        {/* Subtle Ambient Radial Gold Glow */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(circle at center, rgba(201,168,76,0.06) 0%, rgba(0,0,0,0) 80%)',
+          }}
+        />
+        {/* Subtle Organic Film Grain Noise Texture */}
+        <div 
+          className="absolute inset-0 pointer-events-none opacity-[0.02] mix-blend-overlay"
+          style={{
+            backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")',
+          }}
+        />
+
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+          className="relative z-10"
+        >
+          <span className="text-gold-400 text-[10px] tracking-[0.5em] uppercase font-sans block mb-3">
+            Atelier Curations
+          </span>
+          <h1 className="font-serif text-ivory text-4xl sm:text-5xl lg:text-6xl font-light tracking-wide">
             {filters.category || 'All Collections'}
           </h1>
-          <p className="text-ivory/40 font-sans text-sm mt-3">
-            {filtered.length} piece{filtered.length !== 1 ? 's' : ''}
+          <div className="w-10 h-[1px] bg-gold-400/30 mx-auto my-6" />
+          <p className="text-ivory/50 font-sans text-xs tracking-widest uppercase">
+            {filtered.length} masterwork{filtered.length !== 1 ? 's' : ''} available
           </p>
         </motion.div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        {/* Category Pills */}
-        <div className="flex gap-2 flex-wrap mb-8 overflow-x-auto scrollbar-hide">
-          {['All', ...categories.map((category) => category.name)].map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setFilters((f) => ({ ...f, category: cat === 'All' ? '' : cat }))}
-              className={`px-5 py-2 text-[10px] tracking-[0.2em] uppercase font-sans whitespace-nowrap transition-all duration-300 ${
-                (cat === 'All' && !filters.category) || filters.category === cat
-                  ? 'bg-obsidian text-gold-400 border border-gold-400/30'
-                  : 'bg-transparent text-obsidian/50 border border-obsidian/15 hover:border-gold-400/40 hover:text-obsidian'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+      <div className="max-w-7xl mx-auto px-6 py-12 sm:py-16">
+        {/* Category Pills (Elegant Horizontal Scroller) */}
+        <div className="flex gap-2.5 pb-3 mb-10 overflow-x-auto scrollbar-hide border-b border-obsidian/5">
+          {['All', ...categories.map((category) => category.name)].map((cat) => {
+            const isSelected = (cat === 'All' && !filters.category) || filters.category === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => setFilters((f) => ({ ...f, category: cat === 'All' ? '' : cat }))}
+                className={`px-6 py-2.5 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase font-sans font-medium whitespace-nowrap transition-all duration-300 rounded-sm border ${
+                  isSelected
+                    ? 'bg-obsidian text-gold-400 border-gold-400/35 shadow-lg'
+                    : 'bg-transparent text-obsidian/60 border-obsidian/10 hover:border-gold-400/30 hover:text-obsidian'
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
         </div>
 
         {/* Search + Sort Bar */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-10">
+        <div className="flex flex-col md:flex-row gap-4 mb-12">
+          {/* Search box */}
           <div className="flex-1 relative">
-            <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-obsidian/30" />
+            <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-obsidian/35" />
             <input
               type="text"
-              placeholder="Search jewelry..."
+              placeholder="Search by collection, materials, pearls..."
               value={filters.search}
               onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-              className="w-full pl-10 pr-4 py-3 bg-transparent border border-obsidian/15 text-obsidian placeholder-obsidian/30 text-sm font-sans outline-none focus:border-gold-400/50 transition-colors"
+              className="w-full pl-11 pr-10 py-3.5 bg-white/40 border border-obsidian/12 text-obsidian placeholder-obsidian/30 text-xs tracking-wider font-sans outline-none focus:border-gold-400/40 focus:bg-white transition-all duration-300 rounded-sm"
             />
             {filters.search && (
-              <button onClick={() => setFilters((f) => ({ ...f, search: '' }))} className="absolute right-4 top-1/2 -translate-y-1/2 text-obsidian/30 hover:text-obsidian">
+              <button 
+                onClick={() => setFilters((f) => ({ ...f, search: '' }))} 
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-obsidian/30 hover:text-obsidian transition-colors"
+              >
                 <X size={14} />
               </button>
             )}
           </div>
 
-          <select
-            value={filters.sortBy}
-            onChange={(e) => setFilters((f) => ({ ...f, sortBy: e.target.value as FilterState['sortBy'] }))}
-            className="px-4 py-3 bg-transparent border border-obsidian/15 text-obsidian text-xs tracking-widest uppercase font-sans outline-none focus:border-gold-400/50 cursor-pointer"
-          >
-            <option value="popularity">Sort: Popularity</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="newest">Newest First</option>
-          </select>
+          <div className="flex flex-wrap sm:flex-nowrap gap-3">
+            {/* Custom Sort Select wrapper */}
+            <div className="relative flex-1 sm:flex-initial">
+              <select
+                value={filters.sortBy}
+                onChange={(e) => setFilters((f) => ({ ...f, sortBy: e.target.value as FilterState['sortBy'] }))}
+                className="w-full sm:w-56 px-4 py-3.5 pr-10 bg-white/40 border border-obsidian/12 text-obsidian text-[10px] tracking-[0.2em] uppercase font-sans outline-none focus:border-gold-400/40 hover:border-gold-400/30 cursor-pointer appearance-none rounded-sm transition-all"
+              >
+                <option value="popularity">Sort: Popularity</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="newest">Newest First</option>
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-obsidian/40">
+                <svg className="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
 
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-5 py-3 border text-xs tracking-widest uppercase font-sans transition-all ${
-              showFilters ? 'bg-obsidian text-gold-400 border-obsidian' : 'border-obsidian/15 text-obsidian/60 hover:border-gold-400/40'
-            }`}
-          >
-            <SlidersHorizontal size={14} />
-            Filters
-          </button>
+            {/* Filter Toggle Button */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center justify-center gap-2 px-6 py-3.5 border text-[10px] tracking-[0.2em] uppercase font-sans font-medium rounded-sm transition-all duration-300 ${
+                showFilters 
+                  ? 'bg-obsidian text-gold-400 border-gold-400/35 shadow-lg' 
+                  : 'bg-white/40 border-obsidian/12 text-obsidian/70 hover:border-gold-400/30 hover:text-obsidian'
+              }`}
+            >
+              <SlidersHorizontal size={13} />
+              Filters
+            </button>
+          </div>
         </div>
 
-        {/* Expanded Filters */}
+        {/* Expanded Filters Drawer */}
         <AnimatePresence>
           {showFilters && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden mb-8"
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="overflow-hidden mb-10"
             >
-              <div className="border border-obsidian/10 p-6 flex flex-wrap gap-8 bg-sand/20">
-                <label className="flex items-center gap-3 cursor-pointer">
+              <div className="border border-gold-400/10 p-6 sm:p-8 flex flex-col sm:flex-row flex-wrap gap-8 bg-sand/15 rounded-sm">
+                
+                {/* Availability Checkbox */}
+                <label className="flex items-center gap-3 cursor-pointer group">
                   <input
                     type="checkbox"
                     checked={filters.inStock}
                     onChange={(e) => setFilters((f) => ({ ...f, inStock: e.target.checked }))}
-                    className="w-4 h-4 accent-gold-500"
+                    className="w-4 h-4 rounded border-obsidian/12 accent-[#c6a45c] cursor-pointer"
                   />
-                  <span className="text-xs tracking-widest uppercase font-sans text-obsidian/60">In Stock Only</span>
+                  <span className="text-[10px] tracking-[0.2em] uppercase font-sans text-obsidian/60 group-hover:text-obsidian transition-colors">
+                    In Stock Only
+                  </span>
                 </label>
-                <div className="flex items-center gap-4">
-                  <span className="text-xs tracking-widest uppercase font-sans text-obsidian/60">Max Price: €{filters.priceRange[1]}</span>
+
+                {/* Price Slider */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1 max-w-md">
+                  <span className="text-[10px] tracking-[0.2em] uppercase font-sans text-obsidian/60 whitespace-nowrap">
+                    Max Budget: <strong className="text-obsidian">€{filters.priceRange[1]}</strong>
+                  </span>
                   <input
                     type="range"
                     min={0}
@@ -141,29 +193,31 @@ const Products: React.FC = () => {
                     step={50}
                     value={filters.priceRange[1]}
                     onChange={(e) => setFilters((f) => ({ ...f, priceRange: [0, Number(e.target.value)] }))}
-                    className="w-32 accent-gold-500"
+                    className="w-full h-1 bg-obsidian/10 rounded-lg appearance-none cursor-pointer accent-[#c6a45c]"
                   />
                 </div>
+
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Grid */}
+        {/* Product Grid */}
         {filtered.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10">
             {filtered.map((product, i) => (
               <ProductCard key={product.id} product={product} index={i} />
             ))}
           </div>
         ) : (
-          <div className="text-center py-24">
-            <p className="font-serif text-obsidian/40 text-2xl font-light">No pieces found.</p>
+          <div className="text-center py-24 bg-white/30 border border-obsidian/5 rounded-sm">
+            <p className="font-serif text-obsidian/50 text-2xl font-light">No pieces found matching your selections.</p>
+            <p className="text-obsidian/30 font-sans text-xs tracking-widest uppercase mt-2">Try clearing search keywords or selecting other categories</p>
             <button
-              onClick={() => setFilters((f) => ({ ...f, category: '', search: '', inStock: false }))}
-              className="mt-6 btn-outline"
+              onClick={() => setFilters((f) => ({ ...f, category: '', search: '', inStock: false, priceRange: [0, 2000] }))}
+              className="mt-8 px-8 py-3 bg-obsidian text-gold-400 hover:text-white transition-all text-[10px] tracking-[0.25em] uppercase font-sans rounded-sm border border-gold-400/20"
             >
-              Clear Filters
+              Clear All Filters
             </button>
           </div>
         )}
