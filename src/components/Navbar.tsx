@@ -10,26 +10,14 @@ const Navbar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [accountOpen, setAccountOpen] = useState(false);
   const { cart, wishlist } = useCart();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const accountRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdowns on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (accountRef.current && !accountRef.current.contains(e.target as Node)) setAccountOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
 
   // Close menu on route change
   useEffect(() => { 
     setIsOpen(false); 
-    setAccountOpen(false); 
   }, [location.pathname]);
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
