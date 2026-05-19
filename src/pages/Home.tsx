@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Sparkles, ShieldCheck, Compass, HelpCircle, Eye } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
 import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
 import BrandStory from '../components/BrandStory';
@@ -28,7 +28,6 @@ const Home: React.FC = () => {
     [visibleProducts]
   );
 
-  const spotlight = visibleProducts[0];
   const categoryHighlights = categories.filter((category) => category.count !== 0).slice(0, 4);
 
   return (
