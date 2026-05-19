@@ -4,9 +4,6 @@ import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import Hero from '../components/Hero';
 import ProductCard from '../components/ProductCard';
-import BrandStory from '../components/BrandStory';
-import Artisan from '../components/Artisan';
-import Testimonials from '../components/Testimonials';
 import { useCategories, useProducts } from '../hooks/useProducts';
 
 const Home: React.FC = () => {
@@ -34,16 +31,6 @@ const Home: React.FC = () => {
     <div className="bg-ivory text-obsidian min-h-screen selection:bg-gold-300 selection:text-obsidian overflow-x-hidden">
       {/* Cinematic Fullscreen Hero */}
       <Hero />
-
-      {/* Luxury Press & Heritage Band */}
-      <section className="bg-obsidian py-8 border-y border-gold-400/10">
-        <div className="max-w-7xl mx-auto px-6 flex flex-wrap justify-between items-center gap-8 opacity-45">
-          <span className="font-serif text-ivory text-sm tracking-[0.3em] uppercase">Vogue</span>
-          <span className="font-serif text-ivory text-sm tracking-[0.3em] uppercase">Harper's Bazaar</span>
-          <span className="font-serif text-ivory text-sm tracking-[0.3em] uppercase">AD Architectural Digest</span>
-          <span className="font-serif text-ivory text-sm tracking-[0.3em] uppercase">Elle Luxury</span>
-        </div>
-      </section>
 
       {/* Section 1: Signature Collections (Editorial-style Asymmetrical Cards) */}
       {categoryHighlights.length > 0 && (
@@ -101,10 +88,7 @@ const Home: React.FC = () => {
         </section>
       )}
 
-      {/* Section 2: Craftsmanship Story (BrandStory) */}
-      <BrandStory />
-
-      {/* Section 4: Live Direct Products Rail */}
+      {/* Section 2: Live Direct Products Rail */}
       {newArrivals.length > 0 && (
         <section className="px-6 py-32 bg-ivory">
           <div className="max-w-7xl mx-auto">
@@ -127,10 +111,7 @@ const Home: React.FC = () => {
         </section>
       )}
 
-      {/* Section 5: The Master Artisan Craft Heritage Section */}
-      <Artisan />
-
-      {/* Section 6: Curated Bestsellers Rail (Obsidian Luxury Mode) */}
+      {/* Section 3: Curated Bestsellers Rail (Obsidian Luxury Mode) */}
       {bestsellers.length > 0 && (
         <section className="px-6 py-32 bg-obsidian text-ivory">
           <div className="max-w-7xl mx-auto">
@@ -152,32 +133,6 @@ const Home: React.FC = () => {
           </div>
         </section>
       )}
-
-      {/* Section 7: Social Proof and Stories */}
-      <Testimonials />
-
-      {/* Section 8: Final Emotional Luxury Call-To-Action */}
-      <section className="relative py-40 px-6 bg-obsidian text-center overflow-hidden border-t border-gold-400/10">
-        <div className="absolute inset-0 bg-gradient-to-b from-obsidian via-sand/5 to-obsidian opacity-50" />
-        <div className="relative max-w-4xl mx-auto z-10 space-y-8">
-          <span className="text-gold-400 text-[10px] tracking-[0.6em] uppercase font-sans block">Exclusivity Awaits</span>
-          <h2 className="font-serif text-ivory text-5xl lg:text-7xl font-light tracking-wide leading-tight">
-            Crafting Heirlooms <br />
-            For Generations
-          </h2>
-          <p className="text-ivory/65 font-sans font-light text-base max-w-xl mx-auto leading-relaxed">
-            Every INDÉRA purchase is ensconced in our signature heavy-grain ivory box, tied with gold silk thread. Experience luxury as a ritual.
-          </p>
-          <div className="pt-6 flex flex-wrap justify-center gap-6">
-            <Link to="/products" className="btn-gold px-10 py-4 text-xs font-sans tracking-[0.2em]">
-              Explore the Catalog
-            </Link>
-            <Link to="/contact" className="btn-outline px-10 py-4 text-xs font-sans tracking-[0.2em] border-gold-400/40 text-gold-400 hover:border-gold-400">
-              Private Consultation
-            </Link>
-          </div>
-        </div>
-      </section>
     </div>
   );
 };
