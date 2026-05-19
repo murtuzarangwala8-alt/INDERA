@@ -7,16 +7,16 @@
     box-sizing: border-box;
   }
 
-  html {
-    scroll-behavior: smooth;
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: #0b0b0b;
+    overflow-x: hidden;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: #FAF7F2;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  body {
-    font-family: 'DM Sans', system-ui, sans-serif;
-    background-color: #FAF7F2;
-    color: #0D0D0D;
+    scroll-behavior: smooth;
   }
 
   h1, h2, h3, h4 {
