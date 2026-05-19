@@ -64,14 +64,14 @@ const Navbar: React.FC = () => {
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between h-24 lg:h-28">
+          <div className="flex items-center justify-between h-24 lg:h-36">
             
-            {/* Brand Logo (Top Left & Enlarged by 20%) */}
-            <Link to="/" className="flex flex-col items-start justify-center leading-none h-24 lg:h-28 min-w-[220px]">
+            {/* Brand Logo (Top Left & Enlarged just for Desktop) */}
+            <Link to="/" className="flex flex-col items-start justify-center leading-none h-24 lg:h-36 min-w-[220px]">
               <img 
                 src="/logo.png" 
                 alt="INDÉRA Logo" 
-                className="max-h-20 lg:max-h-24 w-auto object-contain transition-all hover:opacity-85" 
+                className="max-h-20 lg:max-h-32 w-auto object-contain transition-all hover:opacity-85" 
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                   const fallback = document.getElementById('indera-logo-fallback');
@@ -79,7 +79,7 @@ const Navbar: React.FC = () => {
                 }}
               />
               <div id="indera-logo-fallback" className="hidden flex-col items-start">
-                <span className="font-serif text-3xl lg:text-4xl font-light tracking-[0.25em] text-ivory">
+                <span className="font-serif text-3xl lg:text-5xl font-light tracking-[0.25em] text-ivory">
                   INDÉRA
                 </span>
                 <span className="text-[10px] tracking-[0.45em] text-gold-400 uppercase font-sans font-light mt-1.5">

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
@@ -31,57 +31,68 @@ function App() {
     <AuthProvider>
       <CartProvider>
         <Router>
-          <Routes>
-            {/* Auth routes — standalone dark layout */}
-            <Route path="/register" element={<AuthLayout><Register /></AuthLayout>} />
-            <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
-            <Route path="/forgot-password" element={<AuthLayout><ForgotPassword /></AuthLayout>} />
-            <Route path="/reset-password" element={<AuthLayout><ResetPassword /></AuthLayout>} />
-            <Route path="/invoice/:id" element={<Invoice />} />
-
-            {/* Main site routes — with Navbar + Footer */}
-            <Route path="/*" element={
-              <div className="flex flex-col" style={{ minHeight: '100vh', background: 'transparent' }}>
-                <IntroLoader />
-                <Navbar />
-                <main className="flex-1">
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/product/:id" element={<ProductDetail />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/wishlist" element={<Wishlist />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/returns" element={<Returns />} />
-                    <Route path="/account" element={<Account />} />
-                    <Route path="/admin" element={<AdminDashboard />} />
-                    <Route path="/order-confirmation" element={<OrderConfirmation />} />
-                  </Routes>
-                </main>
-                <Footer />
-              </div>
-            } />
-          </Routes>
-
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              style: {
-                background: '#1A1A1A',
-                color: '#FAF7F2',
-                border: '1px solid rgba(201,168,76,0.2)',
-                fontFamily: '"DM Sans", sans-serif',
-                fontSize: '13px',
-                letterSpacing: '0.02em',
-              },
-            }}
-          />
-          <PWAPrompt />
+          <AppContent />
         </Router>
       </CartProvider>
     </AuthProvider>
+  );
+}
+
+function AppContent() {
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+
+  return (
+    <>
+      <Routes>
+        {/* Auth routes — standalone dark layout */}
+        <Route path="/register" element={<AuthLayout><Register /></AuthLayout>} />
+        <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
+        <Route path="/forgot-password" element={<AuthLayout><ForgotPassword /></AuthLayout>} />
+        <Route path="/reset-password" element={<AuthLayout><ResetPassword /></AuthLayout>} />
+        <Route path="/invoice/:id" element={<Invoice />} />
+
+        {/* Main site routes — with Navbar + Footer */}
+        <Route path="/*" element={
+          <div className="flex flex-col" style={{ minHeight: '100vh', background: 'transparent' }}>
+            <IntroLoader />
+            <Navbar />
+            <main className={`flex-1 ${isHome ? '' : 'pt-24 lg:pt-36'}`}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/returns" element={<Returns />} />
+                <Route path="/account" element={<Account />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/order-confirmation" element={<OrderConfirmation />} />
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        } />
+      </Routes>
+
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: '#1A1A1A',
+            color: '#FAF7F2',
+            border: '1px solid rgba(201,168,76,0.2)',
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: '13px',
+            letterSpacing: '0.02em',
+          },
+        }}
+      />
+      <PWAPrompt />
+    </>
   );
 }
 
