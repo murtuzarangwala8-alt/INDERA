@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import IntroLoader from './components/IntroLoader';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import Products from './pages/Products';
@@ -41,6 +42,7 @@ function App() {
             {/* Main site routes — with Navbar + Footer */}
             <Route path="/*" element={
               <div className="flex flex-col" style={{ minHeight: '100vh', background: 'transparent' }}>
+                <IntroLoader />
                 <Navbar />
                 <main className="flex-1">
                   <Routes>
