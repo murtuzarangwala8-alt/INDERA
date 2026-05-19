@@ -5,11 +5,9 @@ import { ArrowRight } from 'lucide-react';
 const Hero: React.FC = () => {
   return (
     <section 
-      className="relative flex items-center overflow-hidden bg-[#0b0b0b] -mt-36"
+      className="relative flex items-center overflow-hidden bg-[#0b0b0b] -mt-20 md:-mt-36 pt-[calc(env(safe-area-inset-top)+6rem)] md:pt-[calc(env(safe-area-inset-top)+11rem)] pb-[calc(env(safe-area-inset-bottom)+3rem)]"
       style={{
         minHeight: '100dvh',
-        paddingTop: 'calc(env(safe-area-inset-top) + 11rem)',
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + 3rem)',
       }}
     >
 
