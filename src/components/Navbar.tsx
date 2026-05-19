@@ -100,90 +100,132 @@ const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Global Navigation Dropdown Overlay */}
+        {/* Global Navigation Dropdown Fullscreen Overlay */}
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="bg-black/98 backdrop-blur-xl border-t border-gold-400/10 overflow-hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="fixed inset-0 z-40 flex flex-col justify-center items-center px-6 overflow-y-auto"
+              style={{
+                minHeight: '100dvh',
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.92), rgba(8,6,4,0.95), rgba(0,0,0,0.97))',
+                backdropFilter: 'blur(22px)',
+                WebkitBackdropFilter: 'blur(22px)',
+              }}
             >
-              <div className="max-w-md mx-auto px-6 py-12 space-y-4 text-center">
+              {/* Luxury Ambient Radial Vignette */}
+              <div 
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.82) 100%)',
+                }}
+              />
+
+              {/* Subtly Visible Organic Film Grain Noise Overlay */}
+              <div 
+                className="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay"
+                style={{
+                  backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.85\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")',
+                }}
+              />
+
+              {/* Centered Editorial Navigation Menu Card */}
+              <div 
+                className="relative w-full max-w-md mx-auto py-12 px-8 rounded-lg bg-black/35 border border-gold-400/10 space-y-4 text-center z-10 transition-all duration-300"
+                style={{
+                  boxShadow: '0 0 80px rgba(0,0,0,0.65)',
+                }}
+              >
                 {/* Standard Editorial Nav Links */}
                 {navLinks.map((link) => {
                   const isActive = location.pathname === link.href.split('?')[0];
                   return (
-                    <Link
-                      key={link.label}
-                      to={link.href}
-                      onClick={() => setIsOpen(false)}
-                      className={`block py-3.5 text-xs tracking-[0.4em] uppercase font-sans transition-colors ${
-                        isActive ? 'text-gold-400' : 'text-ivory/75 hover:text-gold-400'
-                      }`}
-                    >
-                      {link.label}
-                    </Link>
+                    <div key={link.label} className="relative py-1 overflow-hidden">
+                      {/* Gold Glow Behind Active Item */}
+                      {isActive && (
+                        <motion.div 
+                          layoutId="activeGlow"
+                          className="absolute inset-0 -z-10 bg-[#c6a45c]/5 blur-lg rounded-full pointer-events-none" 
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                        />
+                      )}
+                      
+                      <Link
+                        to={link.href}
+                        onClick={() => setIsOpen(false)}
+                        className={`relative block py-2.5 text-[11px] sm:text-xs tracking-[0.45em] uppercase font-sans font-medium transition-all duration-300 ${
+                          isActive ? 'text-[#c6a45c] scale-105' : 'text-white/80 hover:text-[#c6a45c] hover:scale-102'
+                        }`}
+                      >
+                        {link.label}
+                      </Link>
+                    </div>
                   );
                 })}
 
                 {/* Fine luxury divider */}
-                <div className="w-16 h-[1px] bg-gold-400/25 mx-auto my-6" />
+                <div className="w-12 h-[1px] bg-gold-400/20 mx-auto my-6" />
 
                 {/* Integrated Customer Portals */}
-                
-                {/* 1. Integrated Search Trigger */}
-                <button
-                  onClick={() => { setIsOpen(false); setSearchOpen(true); }}
-                  className="w-full flex items-center justify-center gap-2 py-3 text-xs tracking-[0.3em] uppercase font-sans text-ivory/75 hover:text-gold-400 transition-colors"
-                >
-                  <Search size={14} /> Search catalog
-                </button>
-
-                {/* 2. My Orders & Profile */}
-                {isAuthenticated ? (
-                  <>
-                    <Link
-                      to="/account"
-                      onClick={() => setIsOpen(false)}
-                      className="block py-3 text-xs tracking-[0.3em] uppercase font-sans text-ivory/75 hover:text-gold-400 transition-colors"
-                    >
-                      <User size={14} className="inline mr-1.5" /> My Account & Orders
-                    </Link>
-                    <button
-                      onClick={() => { logout(); setIsOpen(false); }}
-                      className="w-full py-3 text-xs tracking-[0.3em] uppercase font-sans text-terracotta/75 hover:text-terracotta transition-colors"
-                    >
-                      <LogOut size={14} className="inline mr-1.5" /> Sign Out
-                    </button>
-                  </>
-                ) : (
-                  <Link
-                    to="/login"
-                    onClick={() => setIsOpen(false)}
-                    className="block py-3 text-xs tracking-[0.3em] uppercase font-sans text-ivory/75 hover:text-gold-400 transition-colors"
+                <div className="space-y-3 pt-2">
+                  {/* 1. Integrated Search Trigger */}
+                  <button
+                    onClick={() => { setIsOpen(false); setSearchOpen(true); }}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 text-[10px] tracking-[0.3em] uppercase font-sans text-white/70 hover:text-[#c6a45c] transition-colors duration-300"
                   >
-                    <User size={14} className="inline mr-1.5" /> Sign In / Register
+                    <Search size={13} className="text-gold-400/70" /> Search catalog
+                  </button>
+
+                  {/* 2. My Orders & Profile */}
+                  {isAuthenticated ? (
+                    <>
+                      <Link
+                        to="/account"
+                        onClick={() => setIsOpen(false)}
+                        className="block py-2.5 text-[10px] tracking-[0.3em] uppercase font-sans text-white/70 hover:text-[#c6a45c] transition-colors duration-300"
+                      >
+                        <User size={13} className="inline mr-1.5 text-gold-400/70" /> My Account & Orders
+                      </Link>
+                      <button
+                        onClick={() => { logout(); setIsOpen(false); }}
+                        className="w-full py-2.5 text-[10px] tracking-[0.3em] uppercase font-sans text-terracotta/75 hover:text-terracotta transition-colors duration-300"
+                      >
+                        <LogOut size={13} className="inline mr-1.5" /> Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      to="/login"
+                      onClick={() => setIsOpen(false)}
+                      className="block py-2.5 text-[10px] tracking-[0.3em] uppercase font-sans text-white/70 hover:text-[#c6a45c] transition-colors duration-300"
+                    >
+                      <User size={13} className="inline mr-1.5 text-gold-400/70" /> Sign In / Register
+                    </Link>
+                  )}
+
+                  {/* 3. Integrated Wishlist */}
+                  <Link
+                    to="/wishlist"
+                    onClick={() => setIsOpen(false)}
+                    className="block py-2.5 text-[10px] tracking-[0.3em] uppercase font-sans text-white/70 hover:text-[#c6a45c] transition-colors duration-300"
+                  >
+                    <Heart size={13} className="inline mr-1.5 text-gold-400/70" /> Wishlist {wishlist.length > 0 && `(${wishlist.length})`}
                   </Link>
-                )}
 
-                {/* 3. Integrated Wishlist */}
-                <Link
-                  to="/wishlist"
-                  onClick={() => setIsOpen(false)}
-                  className="block py-3 text-xs tracking-[0.3em] uppercase font-sans text-ivory/75 hover:text-gold-400 transition-colors"
-                >
-                  <Heart size={14} className="inline mr-1.5" /> Wishlist {wishlist.length > 0 && `(${wishlist.length})`}
-                </Link>
-
-                {/* 4. Integrated Shopping Bag */}
-                <Link
-                  to="/cart"
-                  onClick={() => setIsOpen(false)}
-                  className="block py-3 text-xs tracking-[0.3em] uppercase font-sans text-ivory/75 hover:text-gold-400 transition-colors"
-                >
-                  <ShoppingBag size={14} className="inline mr-1.5" /> Shopping Bag {cartCount > 0 && `(${cartCount})`}
-                </Link>
+                  {/* 4. Integrated Shopping Bag */}
+                  <Link
+                    to="/cart"
+                    onClick={() => setIsOpen(false)}
+                    className="block py-2.5 text-[10px] tracking-[0.3em] uppercase font-sans text-white/70 hover:text-[#c6a45c] transition-colors duration-300"
+                  >
+                    <ShoppingBag size={13} className="inline mr-1.5 text-gold-400/70" /> Shopping Bag {cartCount > 0 && `(${cartCount})`}
+                  </Link>
+                </div>
 
               </div>
             </motion.div>
