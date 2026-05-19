@@ -40,10 +40,6 @@ const Hero: React.FC = () => {
       <div className="relative max-w-7xl mx-auto px-6 lg:px-8 w-full z-10">
         <div className="max-w-2xl py-12 md:py-24">
 
-          <p className="text-gold-400 text-[10px] sm:text-xs tracking-[0.45em] uppercase font-sans mb-4 sm:mb-6 animate-fade-in">
-            New Collection 2024
-          </p>
-
           <h1 
             className="font-serif text-ivory leading-[1.08] mb-4 sm:mb-6 animate-fade-in-up"
             style={{ fontSize: 'clamp(2.3rem, 7.5vw, 5.5rem)', fontWeight: 300, animationDelay: '0.2s' }}
