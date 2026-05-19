@@ -58,14 +58,14 @@ const Navbar: React.FC = () => {
   return (
     <>
       <nav
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-700 pt-[calc(env(safe-area-inset-top)+24px)] pb-4 md:py-5 bg-gradient-to-b from-black/60 via-black/30 to-transparent border-b border-transparent"
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-700 pt-[calc(env(safe-area-inset-top)+24px)] pb-4 md:py-5 bg-transparent border-b border-transparent"
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="relative flex items-center justify-between h-14 md:h-28">
+          <div className="flex items-center justify-between h-14 md:h-28">
             
             <Link 
               to="/" 
-              className={`absolute left-1/2 -translate-x-1/2 md:relative md:left-0 md:translate-x-0 flex flex-col items-center md:items-start justify-center leading-none h-14 md:h-28 min-w-0 md:min-w-[220px] transition-all duration-700 ${
+              className={`flex flex-col items-start justify-center leading-none h-14 md:h-28 min-w-0 md:min-w-[220px] transition-all duration-700 ${
                 scrolled ? 'opacity-0 pointer-events-none translate-y-[-10px]' : 'opacity-100'
               }`}
             >
@@ -79,7 +79,7 @@ const Navbar: React.FC = () => {
                   if (fallback) fallback.style.display = 'flex';
                 }}
               />
-              <div id="indera-logo-fallback" className="hidden flex-col items-center md:items-start select-none">
+              <div id="indera-logo-fallback" className="hidden flex-col items-start select-none">
                 <span className="font-serif text-xl md:text-4xl font-light tracking-[0.25em] text-ivory drop-shadow-[0_0_8px_rgba(201,168,76,0.2)]">
                   INDÉRA
                 </span>
@@ -92,7 +92,7 @@ const Navbar: React.FC = () => {
             {/* Minimal Toggle (Global Hamburger - Borderless, Floating & Ultra-thin Line) */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 md:relative md:right-auto md:top-auto md:translate-y-0 flex items-center justify-center p-3 text-ivory hover:text-gold-400 transition-all duration-300 hover:scale-105 group relative z-50"
+              className="flex items-center justify-center p-3 text-ivory hover:text-gold-400 transition-all duration-300 hover:scale-105 group relative z-50"
               aria-label="Toggle menu"
             >
               {isOpen ? (
