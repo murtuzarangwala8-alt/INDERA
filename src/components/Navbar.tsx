@@ -61,7 +61,7 @@ const Navbar: React.FC = () => {
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-700 py-5 bg-transparent border-b border-transparent"
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20 lg:h-24">
+          <div className="flex items-center justify-between h-24 lg:h-28">
             
             <Link 
               to="/" 
