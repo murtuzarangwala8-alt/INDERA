@@ -61,18 +61,18 @@ const Navbar: React.FC = () => {
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-700 pt-[calc(env(safe-area-inset-top)+24px)] pb-4 md:py-5 bg-transparent border-b border-transparent"
       >
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 md:h-28">
+          <div className="flex items-center justify-between h-16 md:h-28">
             
             <Link 
               to="/" 
-              className={`flex flex-col items-start justify-center leading-none h-14 md:h-28 min-w-0 md:min-w-[220px] transition-all duration-700 ${
+              className={`flex flex-col items-start justify-center leading-none h-16 md:h-28 min-w-0 md:min-w-[220px] transition-all duration-700 ${
                 scrolled ? 'opacity-0 pointer-events-none translate-y-[-10px]' : 'opacity-100'
               }`}
             >
               <img 
                 src="/logo.png" 
                 alt="INDÉRA Logo" 
-                className="max-h-8 md:max-h-24 w-auto object-contain transition-all hover:opacity-95 filter drop-shadow-[0_0_8px_rgba(201,168,76,0.15)] hover:drop-shadow-[0_0_16px_rgba(201,168,76,0.35)] duration-500"
+                className="max-h-11 md:max-h-24 w-auto object-contain transition-all hover:opacity-95 filter drop-shadow-[0_0_8px_rgba(201,168,76,0.15)] hover:drop-shadow-[0_0_16px_rgba(201,168,76,0.35)] duration-500"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                   const fallback = document.getElementById('indera-logo-fallback');
@@ -80,10 +80,10 @@ const Navbar: React.FC = () => {
                 }}
               />
               <div id="indera-logo-fallback" className="hidden flex-col items-start select-none">
-                <span className="font-serif text-xl md:text-4xl font-light tracking-[0.25em] text-ivory drop-shadow-[0_0_8px_rgba(201,168,76,0.2)]">
+                <span className="font-serif text-2xl md:text-4xl font-light tracking-[0.25em] text-ivory drop-shadow-[0_0_8px_rgba(201,168,76,0.2)]">
                   INDÉRA
                 </span>
-                <span className="tracking-[0.45em] text-gold-400 uppercase font-sans font-light mt-1 text-[7px] md:text-[10px]">
+                <span className="tracking-[0.45em] text-gold-400 uppercase font-sans font-light mt-1 text-[8px] md:text-[10px]">
                   Indo-European Atelier
                 </span>
               </div>
